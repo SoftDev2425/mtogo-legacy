@@ -1,7 +1,5 @@
-# Service Name
+# MTOGO Legacy Application
 
-...
-
-semantic release docs:
-- https://github.com/semantic-release/semantic-release
-fix, feat, ...
+1. Start docker desktop
+2. Run `./start.sh` in your terminal to start needed dependencies.
+3. Run `npm run dev`
