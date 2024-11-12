@@ -11,6 +11,7 @@ function routes(app: Express) {
   );
 
   // Register API routes
+  // TODO - REMOVE
   app.use('/api/users', UserRouter);
 
   // Catch unregistered routes

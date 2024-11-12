@@ -1,0 +1,21 @@
+services:
+  postgres_db_mtogo_legacy:
+    image: postgres:latest
+    container_name: postgres_db_mtogo_legacy
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mtogo_legacy
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_db_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+volumes:
+  postgres_db_data:
+
+networks:
+  app-network:
+    driver: bridge

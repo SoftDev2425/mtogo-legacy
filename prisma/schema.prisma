@@ -13,15 +13,42 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id       String  @id @default(uuid())
-  email    String  @unique
-  name     String?
-  password String?
+// Customer model
+model Customers {
+  id        String   @id @default(cuid())
+  firstName String   @db.VarChar(255)
+  lastName  String   @db.VarChar(255)
+  phone     String   @unique @db.VarChar(255)
+  email     String   @unique @db.VarChar(255)
+  password  String   @db.VarChar(255)
+  role      String   @default("USER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model TestTable {
-  id    String  @id @default(uuid())
-  name  String?
-  email String?
+// Restaurant model
+model Restaurants {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(255)
+  email     String   @unique @db.VarChar(255)
+  // phone     String   @unique @db.VarChar(255)
+  password  String   @db.VarChar(255)
+  role      String   @default("RESTAURANT")
+  address   Address  @relation(fields: [addressId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  addressId String
+}
+
+model Address {
+  id          String        @id @default(cuid())
+  street      String        @db.VarChar(255)
+  city        String        @db.VarChar(255)
+  state       String        @db.VarChar(255)
+  zip         String        @db.VarChar(255)
+  x           Float         @db.DoublePrecision
+  y           Float         @db.DoublePrecision
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  Restaurants Restaurants[]
 }
