@@ -13,6 +13,14 @@ services:
     networks:
       - app-network
 
+  redis:
+    container_name: redis_mtogo_legacy
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
 volumes:
   postgres_db_data:
 

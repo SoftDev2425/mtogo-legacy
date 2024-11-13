@@ -1,67 +1,116 @@
 import prisma from '../../prisma/client';
 import bcrypt from 'bcrypt';
 import { redisClient } from '../redis/client';
-import { Response } from 'express';
+import { Prisma } from '@prisma/client';
 
 const MAX_SESSIONS = 3;
 
-async function customerLogin(
+async function registerCustomer(
+  firstName: string,
+  lastName: string,
+  phone: string,
   email: string,
   password: string,
-  rememberMe: boolean,
-  res: Response,
 ) {
-  const user = await prisma.customers.findUnique({
-    where: {
-      email,
-    },
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const customer = await prisma.customers.create({
+      data: {
+        firstName,
+        lastName,
+        phone,
+        email,
+        password: hashedPassword,
+      },
+    });
+
+    return customer;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (
+        error.code === 'P2002' &&
+        (error.meta?.target as string[])?.includes('email')
+      ) {
+        throw new Error('A customer with this email already exists');
+      }
+    }
+    throw error;
+  }
+}
+
+async function registerRestaurant() {}
+
+async function login(email: string, password: string, rememberMe: boolean) {
+  const customer = await prisma.customers.findUnique({
+    where: { email },
   });
 
-  if (!user || !(await bcrypt.compare(password, user.password))) {
+  const restaraunt = await prisma.restaurants.findUnique({
+    where: { email },
+  });
+
+  let user;
+
+  if (customer) {
+    user = customer;
+  } else if (restaraunt) {
+    user = restaraunt;
+  } else {
     throw new Error('Invalid credentials');
   }
 
-  // Get the current session tokens for the user
-  const userSessionsKey = `userSessions-${user.id}`;
-  const userSessions = await redisClient.lRange(userSessionsKey, 0, -1);
+  if (!(await bcrypt.compare(password, user.password))) {
+    throw new Error('Invalid credentials');
+  }
 
-  // If the user has 3 sessions, remove the oldest one
-  if (userSessions.length >= MAX_SESSIONS) {
-    const oldestSessionToken = userSessions[0];
+  const sessionTokenData = await manageUserSessions(
+    user.id,
+    rememberMe,
+    user.role,
+  );
+  return sessionTokenData;
+}
+
+async function manageUserSessions(
+  userId: string,
+  rememberMe: boolean,
+  userRole: string,
+) {
+  const sessionKey = `${userRole}-${userId}`;
+  const customerSessions = await redisClient.lRange(sessionKey, 0, -1);
+
+  // Remove the oldest session if the maximum number of sessions is reached
+  if (customerSessions.length >= MAX_SESSIONS) {
+    const oldestSessionToken = customerSessions[0];
     await redisClient.del(`sessionToken-${oldestSessionToken}`);
-    await redisClient.lPop(userSessionsKey);
+    await redisClient.lPop(sessionKey);
   }
 
   // Generate a new session token
   const sessionToken = crypto.randomUUID();
-  const sessionTokenExpiry = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24; // 30 days if rememberMe is true, else 1 day
+  const sessionTokenExpiry = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24; // 30 days or 1 day
 
   const sessionData = {
-    userId: user.id,
-    role: user.role,
+    userId,
+    role: 'customer',
     createdAt: new Date().toISOString(),
   };
 
-  // Store the session token in Redis with the user ID as the value
+  // Store the session token in Redis
   await redisClient.set(
-    `sessionToken-${sessionToken}`,
+    `customerSessionToken-${sessionToken}`,
     JSON.stringify(sessionData),
     {
       EX: sessionTokenExpiry,
     },
   );
 
-  // Add the new session token to the user's session list
-  await redisClient.rPush(userSessionsKey, sessionToken);
-  await redisClient.expire(userSessionsKey, sessionTokenExpiry);
+  // Add the new session token to the customer's session list
+  await redisClient.rPush(sessionKey, sessionToken);
+  await redisClient.expire(sessionKey, sessionTokenExpiry);
 
-  // Return the token to the user via a cookie
-  res.cookie('sessionToken', sessionToken, {
-    maxAge: sessionTokenExpiry * 1000,
-    httpOnly: true,
-  });
-
-  return res.status(200).json({ message: 'Login successful!' });
+  return { sessionToken, sessionTokenExpiry };
 }
 
-export { customerLogin };
+export { registerCustomer, registerRestaurant, login };

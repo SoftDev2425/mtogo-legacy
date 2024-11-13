@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import createServer from './utils/server';
 import prisma from '../prisma/client';
-import { handlePopulateDatabase } from './utils/handlePopulateDatabase';
+import { redisClient } from './redis/client';
 
 dotenv.config();
 
@@ -17,7 +17,10 @@ async function main() {
 main()
   .then(async () => {
     await prisma.$connect();
-    await handlePopulateDatabase();
+    await redisClient.connect();
+    redisClient.on('error', () =>
+      console.log('Connection to redis server failed'),
+    );
   })
   .catch(async e => {
     console.error(e);

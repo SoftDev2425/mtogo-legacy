@@ -1,5 +1,5 @@
 import { Express, Request, Response } from 'express';
-import UserRouter from './routes/user.route';
+import AuthRouter from './routes/auth.routes';
 
 function routes(app: Express) {
   app.get('/', (_req: Request, res: Response) =>
@@ -10,9 +10,7 @@ function routes(app: Express) {
     res.sendStatus(200),
   );
 
-  // Register API routes
-  // TODO - REMOVE
-  app.use('/api/users', UserRouter);
+  app.use('/api/auth', AuthRouter);
 
   // Catch unregistered routes
   app.all('*', (req: Request, res: Response) => {
