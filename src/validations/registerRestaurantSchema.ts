@@ -1,4 +1,4 @@
-import { passwordRegex } from '@/utils/regex';
+import { passwordRegex } from '../utils/regex';
 import { z } from 'zod';
 
 const registerRestaurantSchema = z.object({

@@ -174,7 +174,7 @@ async function manageUserSessions(
   await redisClient.rPush(sessionKey, sessionToken);
   await redisClient.expire(sessionKey, sessionTokenExpiry);
 
-  return { sessionToken, sessionTokenExpiry, role: userRole };
+  return { sessionToken, sessionTokenExpiry };
 }
 
 export { registerCustomer, registerRestaurant, login };

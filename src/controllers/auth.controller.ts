@@ -137,14 +137,14 @@ async function handleLogin(req: CustomRequest, res: Response) {
 
     loginSchema.parse({ email, password });
 
-    const { sessionToken, sessionTokenExpiry, role } = await login(
+    const { sessionToken, sessionTokenExpiry } = await login(
       email,
       password,
       rememberMe,
     );
 
     // Return the token to the customer via a cookie
-    res.cookie(`${role}-SessionToken`, sessionToken, {
+    res.cookie(`session`, sessionToken, {
       maxAge: sessionTokenExpiry * 1000,
       httpOnly: true,
     });
@@ -168,16 +168,9 @@ async function handleLogin(req: CustomRequest, res: Response) {
   }
 }
 
-async function handleLogout(req: CustomRequest, res: Response) {
+async function handleLogout(req: Request, res: Response) {
   try {
-    req.session.destroy(err => {
-      if (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Logout failed' });
-      }
-      res.clearCookie('sid');
-      res.status(200).json({ message: 'Logout successful' });
-    });
+    res.setHeader('set-Cookie', `session=deleted; expires=${new Date(0)}`);
   } catch (error) {
     console.error(error);
   }
