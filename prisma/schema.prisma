@@ -31,7 +31,7 @@ model Restaurants {
   id        String   @id @default(cuid())
   name      String   @db.VarChar(255)
   email     String   @unique @db.VarChar(255)
-  phone     String   @unique @db.VarChar(255)
+  phone     String   @db.VarChar(255)
   password  String   @db.VarChar(255)
   role      String   @default("RESTAURANT")
   address   Address  @relation(fields: [addressId], references: [id])
@@ -44,7 +44,6 @@ model Address {
   id          String        @id @default(cuid())
   street      String        @db.VarChar(255)
   city        String        @db.VarChar(255)
-  state       String        @db.VarChar(255)
   zip         String        @db.VarChar(255)
   x           Float         @db.DoublePrecision
   y           Float         @db.DoublePrecision

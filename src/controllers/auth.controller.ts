@@ -2,9 +2,10 @@ import { CustomRequest } from '../types/CustomRequest';
 import { loginSchema } from '../validations/loginSchema';
 import { Response } from 'express';
 import { ZodError } from 'zod';
-import { registerUserSchema } from '../validations/registerUserSchema';
+import { registerCustomerSchema } from '../validations/registerCustomerSchema';
 import { validateRequiredFields } from '../utils/validateRequiredFields';
-import { registerCustomer, login } from '../services/auth.service';
+import { registerCustomer, login, registerRestaurant } from '../services/auth.service';
+import { registerRestaurantSchema } from '../validations/registerRestaurantSchema';
 
 async function handleRegisterCustomer(req: CustomRequest, res: Response) {
   try {
@@ -23,7 +24,7 @@ async function handleRegisterCustomer(req: CustomRequest, res: Response) {
       return res.status(400).json({ errors });
     }
 
-    registerUserSchema.parse({
+    registerCustomerSchema.parse({
       firstName,
       lastName,
       phone,
@@ -68,12 +69,55 @@ async function handleRegisterCustomer(req: CustomRequest, res: Response) {
 
 async function handleRegisterRestaurant(req: CustomRequest, res: Response) {
   try {
-    const { email, password } = req.body;
-    console.log(email, password);
+    const { name, email, phone, password, address } = req.body;
 
-    res.status(200).json({ message: 'Restaurant registered' });
+    const requiredFields = ['name', 'email', 'phone', 'password', 'address'];
+    const errors = validateRequiredFields(req.body, requiredFields);
+
+    if (errors.length > 0) {
+      return res.status(400).json({ errors });
+    }
+
+    registerRestaurantSchema.parse({
+      name,
+      email,
+      phone,
+      password,
+      address,
+    });
+
+    const restaurant = await registerRestaurant(
+      name,
+      email,
+      phone,
+      password,
+      address,
+    );
+
+    return res.status(200).json({
+      message: 'Restaurant registered successfully',
+      customer: {
+        id: restaurant.id,
+        name: restaurant.name,
+        email: restaurant.email,
+        phone: restaurant.phone,
+        address: restaurant.address,
+        createdAt: restaurant.createdAt,
+      },
+    });
   } catch (error) {
-    console.log(error);
+    if (error instanceof ZodError) {
+      const errorMessages = error.errors.map(err => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }));
+      return res.status(400).json({ errors: errorMessages });
+    } else if (error instanceof Error) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 }
 
