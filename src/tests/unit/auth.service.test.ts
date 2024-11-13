@@ -104,11 +104,7 @@ describe('customerLogin', () => {
 
   it('should successfully login a customer', async () => {
     // Arrange
-
     // Act
-
     // Assert
-
-
   });
 });
