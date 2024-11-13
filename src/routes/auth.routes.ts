@@ -5,7 +5,6 @@ const router = express.Router();
 
 router.post('/login', authController.handleLogin);
 
-
 // a login for MTOGO platform only - administrator of the platform
 // router.post('/login/admin', authController.handleLoginAdmin);
 

@@ -147,7 +147,7 @@ async function manageUserSessions(
   // Remove the oldest session if the maximum number of sessions is reached
   if (customerSessions.length >= MAX_SESSIONS) {
     const oldestSessionToken = customerSessions[0];
-    await redisClient.del(`sessionToken-${oldestSessionToken}`);
+    await redisClient.del(`userRole-${oldestSessionToken}`);
     await redisClient.lPop(sessionKey);
   }
 
@@ -157,13 +157,13 @@ async function manageUserSessions(
 
   const sessionData = {
     userId,
-    role: 'customer',
+    role: userRole,
     createdAt: new Date().toISOString(),
   };
 
   // Store the session token in Redis
   await redisClient.set(
-    `customerSessionToken-${sessionToken}`,
+    `${userRole}-SessionToken-${sessionToken}`,
     JSON.stringify(sessionData),
     {
       EX: sessionTokenExpiry,
@@ -174,7 +174,7 @@ async function manageUserSessions(
   await redisClient.rPush(sessionKey, sessionToken);
   await redisClient.expire(sessionKey, sessionTokenExpiry);
 
-  return { sessionToken, sessionTokenExpiry };
+  return { sessionToken, sessionTokenExpiry, role: userRole };
 }
 
 export { registerCustomer, registerRestaurant, login };

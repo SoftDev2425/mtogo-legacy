@@ -4,7 +4,11 @@ import { Response } from 'express';
 import { ZodError } from 'zod';
 import { registerCustomerSchema } from '../validations/registerCustomerSchema';
 import { validateRequiredFields } from '../utils/validateRequiredFields';
-import { registerCustomer, login, registerRestaurant } from '../services/auth.service';
+import {
+  registerCustomer,
+  login,
+  registerRestaurant,
+} from '../services/auth.service';
 import { registerRestaurantSchema } from '../validations/registerRestaurantSchema';
 
 async function handleRegisterCustomer(req: CustomRequest, res: Response) {
@@ -133,14 +137,14 @@ async function handleLogin(req: CustomRequest, res: Response) {
 
     loginSchema.parse({ email, password });
 
-    const { sessionToken, sessionTokenExpiry } = await login(
+    const { sessionToken, sessionTokenExpiry, role } = await login(
       email,
       password,
       rememberMe,
     );
 
     // Return the token to the customer via a cookie
-    res.cookie('customerSessionToken', sessionToken, {
+    res.cookie(`${role}-SessionToken`, sessionToken, {
       maxAge: sessionTokenExpiry * 1000,
       httpOnly: true,
     });
