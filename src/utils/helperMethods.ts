@@ -23,8 +23,8 @@ export async function createTestAdmin() {
       data: {
         email: 'john@example.com',
         password: await hashPassword(),
-      }
-    })
+      },
+    });
   } catch (error) {
     throw new Error(`Error creating test admin: ${error}`);
   }
