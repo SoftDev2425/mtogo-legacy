@@ -6,7 +6,7 @@ const isAdmin = async (req: Request, res: Response, next: NextFunction) => {
   const { email } = req.body;
 
   // Fetch user from database
-  const user = await prisma.mTOGO_Admins.findUnique({
+  const user = await prisma.admins.findUnique({
     where: {
       email: email,
     },

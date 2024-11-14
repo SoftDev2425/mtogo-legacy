@@ -114,7 +114,7 @@ async function login(email: string, password: string, rememberMe: boolean) {
     where: { email },
   });
 
-  const admin = await prisma.mTOGO_Admins.findUnique({
+  const admin = await prisma.admins.findUnique({
     where: { email },
   });
 
@@ -183,4 +183,4 @@ async function manageUserSessions(
   return { sessionToken, sessionTokenExpiry };
 }
 
-export { registerCustomer, registerRestaurant, login };
+export { registerCustomer, registerRestaurant, login, manageUserSessions };

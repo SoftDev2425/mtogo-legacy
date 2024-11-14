@@ -85,7 +85,7 @@ describe('customerLogin', () => {
   });
 });
 
-describe.only('adminLogin', () => {
+describe('adminLogin', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -103,7 +103,7 @@ describe.only('adminLogin', () => {
     expect(response.status).toBe(200);
     expect(response.headers['set-cookie']).toBeDefined();
 
-    // TODO: This doesn't work
+    // TODO: This doesn't pass
     // expect(response.headers['set-cookie'][0]).toContain('adminSessionToken');
 
     // // check if valid uuid

@@ -19,7 +19,7 @@ export async function createTestCustomer() {
 
 export async function createTestAdmin() {
   try {
-    return await prisma.mTOGO_Admins.create({
+    return await prisma.admins.create({
       data: {
         email: 'john@example.com',
         password: await hashPassword(),
