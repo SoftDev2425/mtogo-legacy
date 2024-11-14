@@ -24,10 +24,10 @@ describe('customerLogin', () => {
     // Assert
     expect(response.status).toBe(200);
     expect(response.headers['set-cookie']).toBeDefined();
-    
+
     // TODO:This doesn't pass
     // expect(response.headers['set-cookie'][0]).toContain('customerSessionToken');
-    
+
     //check if valid uuid
     const sessionToken = response.headers['set-cookie'][0]
       .split(';')[0]
@@ -102,14 +102,14 @@ describe.only('adminLogin', () => {
     // Assert
     expect(response.status).toBe(200);
     expect(response.headers['set-cookie']).toBeDefined();
-    
+
     // TODO: This doesn't work
     // expect(response.headers['set-cookie'][0]).toContain('adminSessionToken');
-    
+
     // // check if valid uuid
     const sessionToken = response.headers['set-cookie'][0]
-     .split(';')[0]
-     .split('=')[1];
+      .split(';')[0]
+      .split('=')[1];
     expect(uuidValidate(sessionToken)).toBe(true);
     expect(response.body.message).toBe('Login successful!');
   });
@@ -120,9 +120,9 @@ describe.only('adminLogin', () => {
 
     // Act
     return supertest(app)
-     .post('/api/auth/login/admin')
-     .send({ email: testCustomer.email, password: testPassword })
-     .expect(401)
-     .expect({ message: 'Unauthorized' });
-  })
+      .post('/api/auth/login/admin')
+      .send({ email: testCustomer.email, password: testPassword })
+      .expect(401)
+      .expect({ message: 'Unauthorized' });
+  });
 });
