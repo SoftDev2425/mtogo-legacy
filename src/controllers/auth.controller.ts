@@ -168,7 +168,7 @@ async function handleLogin(req: CustomRequest, res: Response) {
   }
 }
 
-async function handleLogout(req: Request, res: Response) {
+async function handleLogout(_req: Request, res: Response) {
   try {
     res.setHeader('set-Cookie', `session=deleted; expires=${new Date(0)}`);
   } catch (error) {
