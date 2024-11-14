@@ -24,9 +24,7 @@ describe('customerLogin', () => {
     // Assert
     expect(response.status).toBe(200);
     expect(response.headers['set-cookie']).toBeDefined();
-
-    // TODO:This doesn't pass
-    // expect(response.headers['set-cookie'][0]).toContain('customerSessionToken');
+    expect(response.headers['set-cookie'][0]).toContain('session');
 
     //check if valid uuid
     const sessionToken = response.headers['set-cookie'][0]
