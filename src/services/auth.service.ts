@@ -114,12 +114,18 @@ async function login(email: string, password: string, rememberMe: boolean) {
     where: { email },
   });
 
+  const admin = await prisma.mTOGO_Admins.findUnique({
+    where: { email },
+  });
+
   let user;
 
   if (customer) {
     user = customer;
   } else if (restaraunt) {
     user = restaraunt;
+  } else if (admin) {
+    user = admin;
   } else {
     throw new Error('Invalid credentials');
   }

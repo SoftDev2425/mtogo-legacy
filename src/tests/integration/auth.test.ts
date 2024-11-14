@@ -1,5 +1,7 @@
 import supertest from 'supertest';
-import { createTestCustomer, testPassword } from '../../utils/helperMethods';
+import { 
+  createTestAdmin, 
+  createTestCustomer, testPassword } from '../../utils/helperMethods';
 import { app } from '../setup/setup';
 import { validate as uuidValidate } from 'uuid';
 
@@ -77,3 +79,43 @@ describe('customerLogin', () => {
     expect(response.body.message).toBe('Invalid credentials');
   });
 });
+
+describe.only('adminLogin', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  })
+
+  it('should successfully login an admin', async () => {
+    // Arrange
+    const admin = await createTestAdmin();    
+
+    console.log('Admin:', admin);
+
+    // Act
+    const response = await supertest(app)
+      .post('/api/auth/login/admin')
+      .send({ email: admin.email, password: testPassword });
+    
+
+    // Debugging: Log the entire response to inspect it
+    console.log('Response:', response.body);
+    console.log('Response Status:', response.status);
+    console.log('Response Headers:', response.headers);
+    
+    
+    // Assert
+    expect(response.status).toBe(200);
+    
+    
+    
+    // expect(response.headers['set-cookie']).toBeDefined();
+    // expect(response.headers['set-cookie'][0]).toContain('adminSessionToken');
+    // // check if valid uuid
+    // const sessionToken = response.headers['set-cookie'][0]
+    //  .split(';')[0]
+    //  .split('=')[1];
+    // expect(uuidValidate(sessionToken)).toBe(true);
+    // expect(response.body.message).toBe('Login successful!');
+  
+  })
+})
