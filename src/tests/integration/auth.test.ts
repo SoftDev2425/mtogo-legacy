@@ -83,7 +83,7 @@ describe('customerLogin', () => {
   });
 });
 
-describe.only('adminLogin', () => {
+describe('adminLogin', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
