@@ -106,20 +106,19 @@ async function registerRestaurant(
 }
 
 async function login(email: string, password: string, rememberMe: boolean) {
-  const customer = await prisma.customers.findUnique({
-    where: { email },
-  });
-
-  const restaraunt = await prisma.restaurants.findUnique({
-    where: { email },
-  });
-
+const [customer, restaurant, admin] = await Promise.all([
+  prisma.customers.findUnique({ where: { email } }),
+  prisma.restaurants.findUnique({ where: { email } }),
+  prisma.admins.findUnique({ where: { email } }),
+]);
   let user;
 
   if (customer) {
     user = customer;
-  } else if (restaraunt) {
-    user = restaraunt;
+  } else if (restaurant) {
+    user = restaurant;
+  } else if (admin) {
+    user = admin;
   } else {
     throw new Error('Invalid credentials');
   }
@@ -177,4 +176,4 @@ async function manageUserSessions(
   return { sessionToken, sessionTokenExpiry };
 }
 
-export { registerCustomer, registerRestaurant, login };
+export { registerCustomer, registerRestaurant, login, manageUserSessions };

@@ -17,5 +17,18 @@ export async function createTestCustomer() {
   }
 }
 
+export async function createTestAdmin() {
+  try {
+    return await prisma.admins.create({
+      data: {
+        email: 'john@example.com',
+        password: await hashPassword(),
+      },
+    });
+  } catch (error) {
+    throw new Error(`Error creating test admin: ${error}`);
+  }
+}
+
 export const testPassword = 'Abcd1234';
 const hashPassword = async () => await bcrypt.hash(testPassword, 10);

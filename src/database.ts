@@ -9,7 +9,7 @@ const dialect = new PostgresDialect({
       host: process.env.POSTGRES_HOST,
       user: process.env.POSTGRES_USER,
       password: String(process.env.POSTGRES_PASSWORD),
-      port: parseInt(process.env.POSTGRES_PORT || '5432'),
+      port: parseInt(process.env.POSTGRES_PORT ?? '5432'),
       max: 10,
     }),
 });

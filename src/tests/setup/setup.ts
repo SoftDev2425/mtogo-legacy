@@ -6,8 +6,10 @@ import { redisClient } from '../../redis/client';
 export let app: any;
 
 global.beforeAll(async () => {
-  app = await createServer();
-  await redisClient.connect();
+  app = createServer();
+  if (!redisClient.isOpen) {
+    await redisClient.connect();
+  }
   redisClient.on('error', () =>
     console.log('Connection to redis server failed'),
   );
@@ -19,6 +21,7 @@ global.beforeEach(async () => {
     prisma.customers.deleteMany(),
     prisma.restaurants.deleteMany(),
     prisma.address.deleteMany(),
+    prisma.admins.deleteMany(),
   ]);
 });
 
