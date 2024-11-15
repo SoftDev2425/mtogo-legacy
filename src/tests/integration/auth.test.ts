@@ -94,7 +94,7 @@ describe('adminLogin', () => {
 
     // Act
     const response = await supertest(app)
-      .post('/api/auth/login/admin')
+      .post('/api/auth/login')
       .send({ email: admin.email, password: testPassword });
 
     // Assert
