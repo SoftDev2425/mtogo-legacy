@@ -7,7 +7,6 @@ const router = express.Router();
 router.post('/login', authController.handleLogin);
 
 // a login for MTOGO platform only - administrator of the platform
-router.post('/login/admin', isAdmin, authController.handleLogin);
 
 router.post('/register/customer', authController.handleRegisterCustomer);
 router.post('/register/restaurant', authController.handleRegisterRestaurant);
