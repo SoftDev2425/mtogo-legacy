@@ -106,17 +106,6 @@ async function registerRestaurant(
 }
 
 async function login(email: string, password: string, rememberMe: boolean) {
-  const customer = await prisma.customers.findUnique({
-    where: { email },
-  });
-
-  const restaraunt = await prisma.restaurants.findUnique({
-    where: { email },
-  });
-
-  const admin = await prisma.admins.findUnique({
-    where: { email },
-  });
 const [customer, restaurant, admin] = await Promise.all([
   prisma.customers.findUnique({ where: { email } }),
   prisma.restaurants.findUnique({ where: { email } }),
@@ -126,8 +115,8 @@ const [customer, restaurant, admin] = await Promise.all([
 
   if (customer) {
     user = customer;
-  } else if (restaraunt) {
-    user = restaraunt;
+  } else if (restaurant) {
+    user = restaurant;
   } else if (admin) {
     user = admin;
   } else {
