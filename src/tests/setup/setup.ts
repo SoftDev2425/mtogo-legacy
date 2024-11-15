@@ -27,5 +27,5 @@ global.beforeEach(async () => {
 
 global.afterAll(async () => {
   await prisma.$disconnect();
-  await redisClient.disconnect();
+  await redisClient.quit();
 });
