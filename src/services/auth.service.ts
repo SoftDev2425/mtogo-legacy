@@ -111,6 +111,7 @@ async function login(email: string, password: string, rememberMe: boolean) {
     prisma.restaurants.findUnique({ where: { email } }),
     prisma.admins.findUnique({ where: { email } }),
   ]);
+
   let user;
 
   if (customer) {
@@ -128,6 +129,7 @@ async function login(email: string, password: string, rememberMe: boolean) {
   }
 
   const sessionTokenData = await manageUserSessions(
+    user.email,
     user.id,
     rememberMe,
     user.role,
@@ -136,17 +138,18 @@ async function login(email: string, password: string, rememberMe: boolean) {
 }
 
 async function manageUserSessions(
+  email: string,
   userId: string,
   rememberMe: boolean,
   userRole: string,
 ) {
-  const sessionKey = `${userRole}-${userId}`;
+  const sessionKey = userId;
   const customerSessions = await redisClient.lRange(sessionKey, 0, -1);
 
   // Remove the oldest session if the maximum number of sessions is reached
   if (customerSessions.length >= MAX_SESSIONS) {
     const oldestSessionToken = customerSessions[0];
-    await redisClient.del(`userRole-${oldestSessionToken}`);
+    await redisClient.del(oldestSessionToken);
     await redisClient.lPop(sessionKey);
   }
 
@@ -155,6 +158,7 @@ async function manageUserSessions(
   const sessionTokenExpiry = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24; // 30 days or 1 day
 
   const sessionData = {
+    email,
     userId,
     role: userRole,
     createdAt: new Date().toISOString(),
@@ -162,7 +166,7 @@ async function manageUserSessions(
 
   // Store the session token in Redis
   await redisClient.set(
-    `${userRole}-SessionToken-${sessionToken}`,
+    `sessionToken-${sessionToken}`,
     JSON.stringify(sessionData),
     {
       EX: sessionTokenExpiry,
