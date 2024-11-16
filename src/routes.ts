@@ -12,7 +12,7 @@ import { errorHandler } from './middlewares/errorHandler';
 
 function routes(app: Express) {
   app.get('/', (_req: Request, res: Response) =>
-    res.send(`Hello from MTOGO: Test Service!`),
+    res.send(`Hello from MTOGO LEGACY MONOLITHIC backend!`),
   );
 
   app.get('/healthcheck', (_req: Request, res: Response) =>

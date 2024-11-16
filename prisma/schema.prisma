@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -21,23 +17,32 @@ model Customers {
   phone     String   @db.VarChar(255)
   email     String   @unique @db.VarChar(255)
   password  String   @db.VarChar(255)
-  role      String   @default("CUSTOMER")
+  role      Role     @default(CUSTOMER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([phone])
 }
 
-// Restaurant model
+// Restaurant model, with an address relation, and a categories relation
 model Restaurants {
   id        String   @id @default(cuid())
   name      String   @db.VarChar(255)
   email     String   @unique @db.VarChar(255)
   phone     String   @db.VarChar(255)
   password  String   @db.VarChar(255)
-  role      String   @default("RESTAURANT")
+  role      Role     @default(RESTAURANT)
   address   Address  @relation(fields: [addressId], references: [id])
+  addressId String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  addressId String
+
+  Categories Categories[] // One restaurant can have many categories
+  Menus      Menus[] // One restaurant can have many menus
+
+  @@index([name])
+  @@index([addressId], name: "address_id_index")
 }
 
 model Address {
@@ -50,13 +55,62 @@ model Address {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   Restaurants Restaurants[]
+
+  @@index([city, zip], name: "city_zip_index")
+  @@index([x, y], name: "coordinates_index")
 }
 
+model Categories {
+  id          String   @id @default(cuid())
+  title       String   @unique @db.VarChar(255)
+  description String?  @db.VarChar(255)
+  sortOrder   Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  restaurant   Restaurants @relation(fields: [restaurantId], references: [id])
+  restaurantId String // Foreign key to associate the category with a restaurant
+
+  menus Menus[] // One category can have many menus
+
+  @@index([restaurantId], name: "restaurant_id_index_category")
+  @@index([title], name: "title_index")
+  @@index([sortOrder], name: "sort_order_index")
+}
+
+model Menus {
+  id          String   @id @default(cuid())
+  title       String   @unique @db.VarChar(255)
+  price       Float
+  description String?  @db.VarChar(255)
+  sortOrder   Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  restaurant   Restaurants @relation(fields: [restaurantId], references: [id])
+  restaurantId String // Foreign key to associate the menu with a restaurant
+
+  category   Categories @relation(fields: [categoryId], references: [id])
+  categoryId String // Foreign key to associate the menu with a category
+
+  @@index([restaurantId], name: "restaurant_id_index_menu")
+  @@index([categoryId], name: "category_id_index")
+  @@index([price], name: "price_index")
+  @@index([sortOrder], name: "sort_order_index_menu")
+}
+
+// Admin model
 model Admins {
   id        String   @id @default(cuid())
   email     String   @unique @db.VarChar(255)
   password  String   @db.VarChar(255)
-  role      String   @default("ADMIN")
+  role      Role     @default(ADMIN)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  CUSTOMER
+  RESTAURANT
+  ADMIN
 }
