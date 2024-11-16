@@ -1,7 +1,10 @@
 import prisma from '../../../prisma/client';
-import { registerCustomer, registerRestaurant } from '../../services/auth.service';
+import {
+  registerCustomer,
+  registerRestaurant,
+} from '../../services/auth.service';
 import bcrypt from 'bcrypt';
-import * as locationService  from '../../utils/getCoordinates';
+import * as locationService from '../../utils/getCoordinates';
 import { Prisma } from '@prisma/client';
 jest.mock('../../utils/getCoordinates');
 
@@ -106,8 +109,10 @@ describe('registerRestaurant', () => {
   });
 
   // Mock the behavior of getCoordinates to return fixed coordinates
-  const mockCoordinates = {lat: 1.1, lon: 1.1};
-  (locationService.getCoordinates as jest.Mock).mockResolvedValue(mockCoordinates);
+  const mockCoordinates = { lat: 1.1, lon: 1.1 };
+  (locationService.getCoordinates as jest.Mock).mockResolvedValue(
+    mockCoordinates,
+  );
 
   const mockRestaurant = {
     name: 'Test Restaurant',
@@ -120,7 +125,7 @@ describe('registerRestaurant', () => {
       zip: '1234',
       x: mockCoordinates.lon,
       y: mockCoordinates.lat,
-    }
+    },
   };
 
   bcrypt.hash = jest.fn().mockResolvedValue(mockRestaurant.password);
@@ -134,9 +139,9 @@ describe('registerRestaurant', () => {
       mockRestaurant.email,
       mockRestaurant.phone,
       'notHashedPassword',
-      mockRestaurant.address
+      mockRestaurant.address,
     );
-    
+
     // Assert
     expect(bcrypt.hash).toHaveBeenCalledTimes(1);
     expect(bcrypt.hash).toHaveBeenCalledWith('notHashedPassword', 10);
@@ -181,15 +186,18 @@ describe('registerRestaurant', () => {
     // Arrange
     // Simulate Prisma throwing a unique constraint error for the email
     prisma.restaurants.create = jest.fn().mockRejectedValue(
-      new Prisma.PrismaClientKnownRequestError('A restaurant with this email already exists', {
-        code: 'P2002',
-        meta: {
-          target: ['email'],
+      new Prisma.PrismaClientKnownRequestError(
+        'A restaurant with this email already exists',
+        {
+          code: 'P2002',
+          meta: {
+            target: ['email'],
+          },
+          clientVersion: '3.10.0',
         },
-        clientVersion: '3.10.0'
-      })
+      ),
     );
-  
+
     // Act & Assert
     await expect(
       registerRestaurant(
@@ -197,17 +205,17 @@ describe('registerRestaurant', () => {
         mockRestaurant.email,
         mockRestaurant.phone,
         'notHashedPassword',
-        mockRestaurant.address
-      )
+        mockRestaurant.address,
+      ),
     ).rejects.toThrow('A restaurant with this email already exists');
-  })
+  });
 
   it('should throw error if something unexpected happens', async () => {
     // Arrange
     const mockError = new Error('Something went wrong');
-    
+
     prisma.restaurants.create = jest.fn().mockRejectedValueOnce(mockError);
-    
+
     // Act & Assert
     await expect(
       registerRestaurant(
@@ -215,10 +223,10 @@ describe('registerRestaurant', () => {
         mockRestaurant.email,
         mockRestaurant.phone,
         'notHashedPassword',
-        mockRestaurant.address
-      )
+        mockRestaurant.address,
+      ),
     ).rejects.toThrow(new Error('Something went wrong'));
-    
+
     expect(prisma.restaurants.create).toHaveBeenCalledTimes(1);
-  })
+  });
 });

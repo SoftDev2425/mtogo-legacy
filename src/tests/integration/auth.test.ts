@@ -7,9 +7,9 @@ import {
 import { app } from '../setup/setup';
 import { validate as uuidValidate } from 'uuid';
 import prisma from '../../../prisma/client';
-import { Restaurant } from '../../models/restaurant'
+import { Restaurant } from '../../models/restaurant';
 import { getCoordinates } from '../../utils/getCoordinates';
-jest.mock('../../utils/getCoordinates')
+jest.mock('../../utils/getCoordinates');
 
 describe('customerLogin', () => {
   beforeEach(() => {
@@ -118,7 +118,7 @@ describe('adminLogin', () => {
 
 describe('registerRestaurant', () => {
   const url = '/api/auth/register/restaurant';
-  let mockRestaurant:Restaurant;
+  let mockRestaurant: Restaurant;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -136,22 +136,20 @@ describe('registerRestaurant', () => {
         zip: '1234',
         x: mockCoordinates.lon,
         y: mockCoordinates.lat,
-      }
+      },
     };
 
     prisma.restaurants.create = jest.fn().mockResolvedValue(mockRestaurant);
   });
 
   it('should successfully register a restaurant', async () => {
-    // Act  
-    const response = await supertest(app)
-      .post(url)
-      .send(mockRestaurant);
-    
+    // Act
+    const response = await supertest(app).post(url).send(mockRestaurant);
+
     // Assert
     expect(response.status).toBe(200);
     expect(response.body.message).toBe('Restaurant registered successfully');
-  })
+  });
 
   it('should return validation error for missing required fields', async () => {
     // Arrange
@@ -159,20 +157,18 @@ describe('registerRestaurant', () => {
       email: 'test.restaurant@example.com',
       phone: '1234567890',
       password: 'hashedpassword',
-      address: { 
-        street: 'Test Street 1', 
-        city: 'Test City', 
+      address: {
+        street: 'Test Street 1',
+        city: 'Test City',
         zip: '1234',
         x: 1.1,
-        y: 1.1
+        y: 1.1,
       },
     };
-    
+
     // Act
-    const response = await supertest(app)
-      .post(url)
-      .send(missingName);
-    
+    const response = await supertest(app).post(url).send(missingName);
+
     // Assert
     expect(response.status).toBe(400);
     expect(response.body.errors).toContainEqual({
@@ -188,20 +184,18 @@ describe('registerRestaurant', () => {
       email: 'invalid-email',
       phone: '1234567890',
       password: 'hashedpassword',
-      address: { 
-        street: 'Test Street 1', 
-        city: 'Test City', 
+      address: {
+        street: 'Test Street 1',
+        city: 'Test City',
         zip: '1234',
         x: 1.1,
-        y: 1.1
+        y: 1.1,
       },
     };
-    
+
     // Act
-    const response = await supertest(app)
-      .post(url)
-      .send(invalidEmail);
-    
+    const response = await supertest(app).post(url).send(invalidEmail);
+
     // Assert
     expect(response.status).toBe(400);
     expect(response.body.errors).toContainEqual({
@@ -214,12 +208,10 @@ describe('registerRestaurant', () => {
     // Arrange
     const mockError = new Error('Unexpected error');
     prisma.restaurants.create = jest.fn().mockRejectedValue(mockError);
-    
+
     // Act
-    const response = await supertest(app)
-      .post(url)
-      .send(mockRestaurant);
-    
+    const response = await supertest(app).post(url).send(mockRestaurant);
+
     // Assert
     expect(response.status).toBe(500);
     expect(response.body.message).toBe('Internal Server Error');
