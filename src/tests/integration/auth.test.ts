@@ -113,6 +113,9 @@ describe('adminLogin', () => {
 });
 
 describe('logout', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
   it('should successfully logout', async () => {
     // Arrange
     const testCustomer = await createTestCustomer();
