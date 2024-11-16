@@ -6,6 +6,10 @@ import {
 } from '../../utils/helperMethods';
 import { app } from '../setup/setup';
 import { validate as uuidValidate } from 'uuid';
+import prisma from '../../../prisma/client';
+import { Restaurant } from '../../models/restaurant'
+import { getCoordinates } from '../../utils/getCoordinates';
+jest.mock('../../utils/getCoordinates')
 
 describe('customerLogin', () => {
   beforeEach(() => {
@@ -109,5 +113,115 @@ describe('adminLogin', () => {
       .split('=')[1];
     expect(uuidValidate(sessionToken)).toBe(true);
     expect(response.body.message).toBe('Login successful!');
+  });
+});
+
+describe('registerRestaurant', () => {
+  const url = '/api/auth/register/restaurant';
+  let mockRestaurant:Restaurant;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    const mockCoordinates = { lat: 1.1, lon: 1.1 };
+    (getCoordinates as jest.Mock).mockResolvedValue(mockCoordinates);
+
+    mockRestaurant = {
+      name: 'Test Restaurant',
+      email: 'test.restaurant@example.com',
+      phone: '1234567890',
+      password: 'Validated1!',
+      address: {
+        street: 'Test Street 1',
+        city: 'Test City',
+        zip: '1234',
+        x: mockCoordinates.lon,
+        y: mockCoordinates.lat,
+      }
+    };
+
+    prisma.restaurants.create = jest.fn().mockResolvedValue(mockRestaurant);
+  });
+
+  it('should successfully register a restaurant', async () => {
+    // Act  
+    const response = await supertest(app)
+      .post(url)
+      .send(mockRestaurant);
+    
+    // Assert
+    expect(response.status).toBe(200);
+    expect(response.body.message).toBe('Restaurant registered successfully');
+  })
+
+  it('should return validation error for missing required fields', async () => {
+    // Arrange
+    const missingName = {
+      email: 'test.restaurant@example.com',
+      phone: '1234567890',
+      password: 'hashedpassword',
+      address: { 
+        street: 'Test Street 1', 
+        city: 'Test City', 
+        zip: '1234',
+        x: 1.1,
+        y: 1.1
+      },
+    };
+    
+    // Act
+    const response = await supertest(app)
+      .post(url)
+      .send(missingName);
+    
+    // Assert
+    expect(response.status).toBe(400);
+    expect(response.body.errors).toContainEqual({
+      field: 'name',
+      message: 'name is required',
+    });
+  });
+
+  it('should return Zod validation errors if data is invalid', async () => {
+    // Arrange
+    const invalidEmail = {
+      name: 'Test Restaurant',
+      email: 'invalid-email',
+      phone: '1234567890',
+      password: 'hashedpassword',
+      address: { 
+        street: 'Test Street 1', 
+        city: 'Test City', 
+        zip: '1234',
+        x: 1.1,
+        y: 1.1
+      },
+    };
+    
+    // Act
+    const response = await supertest(app)
+      .post(url)
+      .send(invalidEmail);
+    
+    // Assert
+    expect(response.status).toBe(400);
+    expect(response.body.errors).toContainEqual({
+      field: 'email',
+      message: 'Invalid email address',
+    });
+  });
+
+  it('should return 500 for unexpected errors', async () => {
+    // Arrange
+    const mockError = new Error('Unexpected error');
+    prisma.restaurants.create = jest.fn().mockRejectedValue(mockError);
+    
+    // Act
+    const response = await supertest(app)
+      .post(url)
+      .send(mockRestaurant);
+    
+    // Assert
+    expect(response.status).toBe(500);
+    expect(response.body.message).toBe('Internal Server Error');
   });
 });

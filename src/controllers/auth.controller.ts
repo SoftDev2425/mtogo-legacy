@@ -10,6 +10,7 @@ import {
   registerRestaurant,
 } from '../services/auth.service';
 import { registerRestaurantSchema } from '../validations/registerRestaurantSchema';
+import { ValidationError } from '../errors/CustomeErrors';
 
 async function handleRegisterCustomer(req: CustomRequest, res: Response) {
   try {
@@ -100,7 +101,7 @@ async function handleRegisterRestaurant(req: CustomRequest, res: Response) {
 
     return res.status(200).json({
       message: 'Restaurant registered successfully',
-      customer: {
+      restaurant: {
         id: restaurant.id,
         name: restaurant.name,
         email: restaurant.email,
@@ -115,13 +116,13 @@ async function handleRegisterRestaurant(req: CustomRequest, res: Response) {
         field: err.path.join('.'),
         message: err.message,
       }));
+
       return res.status(400).json({ errors: errorMessages });
-    } else if (error instanceof Error) {
+    } else if (error instanceof ValidationError) {
       return res.status(400).json({ message: error.message });
     }
 
-    console.error(error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 }
 
