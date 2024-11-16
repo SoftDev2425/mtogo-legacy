@@ -191,7 +191,11 @@ function getUserSessionKey(userRole: string, userId: string): string {
   return `${userRole}-${userId}`;
 }
 
-async function logout(redis: typeof redisClient, sessionToken: string, userRole: string) {
+async function logout(
+  redis: typeof redisClient,
+  sessionToken: string,
+  userRole: string,
+) {
   const sessionKey = getSessionKey(userRole, sessionToken);
   const sessionData = await redis.get(sessionKey);
 
@@ -210,6 +214,5 @@ async function logout(redis: typeof redisClient, sessionToken: string, userRole:
 
   return { message: 'Logged out successfully' };
 }
-
 
 export { registerCustomer, registerRestaurant, login, logout };

@@ -196,18 +196,18 @@ async function handleLogout(req: CustomRequest, res: Response) {
       return sendErrorResponse(res, 400, 'Session token is missing');
     }
 
-    const userRole  = await validateSessionToken(sessionToken);
+    const userRole = await validateSessionToken(sessionToken);
     await logout(redisClient, sessionToken, userRole);
 
     res.clearCookie('session');
     return res.status(200).json({ message: 'Logout successful' });
   } catch (error) {
     console.error('Error during logout:', error);
-    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    const message =
+      error instanceof Error ? error.message : 'Internal Server Error';
     res.status(500).json({ message });
   }
 }
-
 
 export default {
   handleLogin,
