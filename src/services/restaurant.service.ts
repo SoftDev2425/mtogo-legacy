@@ -1,6 +1,13 @@
 import prisma from '../../prisma/client';
 import { Prisma } from '@prisma/client';
 
+/**
+ *
+ * @param title
+ * @param description
+ * @param restaurantId
+ * @returns created category
+ */
 async function createCategory(
   title: string,
   description: string,
@@ -51,8 +58,25 @@ async function createCategory(
   }
 }
 
+/**
+ *
+ * @returns all categories
+ */
 async function getAllCategories() {
-  return await prisma.categories.findMany();
+  return await prisma.categories.findMany({
+    orderBy: {
+      sortOrder: 'asc',
+    },
+    // select everything
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      sortOrder: true,
+      createdAt: true,
+      menus: true,
+    },
+  });
 }
 
 async function updateCategory(
@@ -123,6 +147,11 @@ async function updateCategory(
   }
 }
 
+/**
+ *
+ * @param categoryId
+ * @param restaurantId
+ */
 async function deleteCategory(categoryId: string, restaurantId: string) {
   const category = await prisma.categories.findUnique({
     where: {
@@ -141,4 +170,187 @@ async function deleteCategory(categoryId: string, restaurantId: string) {
   });
 }
 
-export { createCategory, getAllCategories, updateCategory, deleteCategory };
+async function createMenu(
+  title: string,
+  description: string,
+  price: number,
+  sortOrder: number,
+  categoryId: string,
+  restaurantId: string,
+) {
+  try {
+    // validate sortOrder
+    const category = await prisma.categories.findUnique({
+      where: {
+        id: categoryId,
+      },
+    });
+
+    if (!category || category.restaurantId !== restaurantId) {
+      throw new Error('Category not found');
+    }
+
+    const menus = await prisma.menus.findMany({
+      where: {
+        categoryId,
+      },
+      orderBy: {
+        sortOrder: 'desc',
+      },
+    });
+
+    if (menus.length > 0) {
+      sortOrder = menus[menus.length - 1].sortOrder + 1;
+    } else {
+      sortOrder = 1;
+    }
+
+    return await prisma.menus.create({
+      data: {
+        title,
+        description,
+        price,
+        sortOrder,
+        category: {
+          connect: {
+            id: categoryId,
+          },
+        },
+        restaurant: {
+          connect: {
+            id: restaurantId,
+          },
+        },
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (
+        error.code === 'P2002' &&
+        (error.meta?.target as string[])?.includes('title')
+      ) {
+        throw new Error('A menu with this title already exists');
+      }
+    }
+    throw error;
+  }
+}
+
+async function getMenusByCategoryId(categoryId: string) {
+  return await prisma.menus.findMany({
+    where: {
+      categoryId,
+    },
+    orderBy: {
+      sortOrder: 'asc',
+    },
+  });
+}
+
+async function updateMenu(
+  menuId: string,
+  title: string,
+  description: string,
+  price: number,
+  sortOrder: number,
+  restaurantId: string,
+) {
+  try {
+    // validate sortOrder
+    const menu = await prisma.menus.findUnique({
+      where: {
+        id: menuId,
+      },
+    });
+
+    if (!menu || menu.restaurantId !== restaurantId) {
+      throw new Error('Menu not found');
+    }
+
+    if (sortOrder !== menu.sortOrder) {
+      const menus = await prisma.menus.findMany({
+        where: {
+          categoryId: menu.categoryId,
+        },
+        orderBy: {
+          sortOrder: 'desc',
+        },
+      });
+
+      if (sortOrder < 0 || sortOrder > menus.length - 1) {
+        throw new Error('Invalid sortOrder');
+      }
+    }
+
+    return await prisma.menus.update({
+      where: {
+        id: menuId,
+      },
+      data: {
+        title,
+        description,
+        price,
+        sortOrder,
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (
+        error.code === 'P2002' &&
+        (error.meta?.target as string[])?.includes('title')
+      ) {
+        throw new Error('A menu with this title already exists');
+      }
+    }
+    throw error;
+  }
+}
+
+async function getCategoriesByRestaurantId(restaurantId: string) {
+  return await prisma.categories.findMany({
+    where: {
+      restaurantId,
+    },
+    orderBy: {
+      sortOrder: 'asc',
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      sortOrder: true,
+      createdAt: true,
+      menus: true,
+    },
+  });
+}
+
+async function deleteMenu(menuId: string, restaurantId: string) {
+  const menu = await prisma.menus.findUnique({
+    where: {
+      id: menuId,
+    },
+  });
+
+  if (!menu || menu.restaurantId !== restaurantId) {
+    throw new Error('Menu not found');
+  }
+
+  await prisma.menus.delete({
+    where: {
+      id: menuId,
+    },
+  });
+}
+
+export {
+  createCategory,
+  getAllCategories,
+  updateCategory,
+  deleteCategory,
+  createMenu,
+  getMenusByCategoryId,
+  updateMenu,
+  getCategoriesByRestaurantId,
+  deleteMenu,
+};

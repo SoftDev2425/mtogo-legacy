@@ -4,10 +4,18 @@ import { createCategorySchema } from '../validations/createCategoryScema';
 import { ZodError } from 'zod';
 import {
   createCategory,
+  createMenu,
   deleteCategory,
+  deleteMenu,
   getAllCategories,
+  getCategoriesByRestaurantId,
+  getMenusByCategoryId,
   updateCategory,
+  updateMenu,
 } from '../services/restaurant.service';
+import { createMenuSchema } from '../validations/createMenuSchema';
+import { updateCategorySchema } from '../validations/updateCategorySchema';
+import { updateMenuSchema } from '../validations/updateMenuSchema';
 
 async function handleCreateCategory(req: CustomRequest, res: Response) {
   try {
@@ -54,18 +62,8 @@ async function handleGetAllCategories(_req: CustomRequest, res: Response) {
   try {
     const categories = await getAllCategories();
 
-    const formattedCategories = categories
-      .map(category => ({
-        id: category.id,
-        title: category.title,
-        description: category.description,
-        sortOrder: category.sortOrder,
-        createdAt: category.createdAt,
-      }))
-      .sort((a, b) => a.sortOrder - b.sortOrder);
-
     return res.status(200).json({
-      categories: formattedCategories,
+      categories,
     });
   } catch (error) {
     console.error(error);
@@ -78,7 +76,7 @@ async function handleUpdateCategory(req: CustomRequest, res: Response) {
     const { categoryId } = req.params;
     const { title, description, sortOrder } = req.body;
 
-    createCategorySchema.parse({
+    updateCategorySchema.parse({
       title,
       description,
       sortOrder,
@@ -133,9 +131,185 @@ async function handleDeleteCategory(req: CustomRequest, res: Response) {
   }
 }
 
+async function handleCreateMenu(req: CustomRequest, res: Response) {
+  try {
+    const { categoryId } = req.params;
+    const { title, description, price, sortOrder } = req.body;
+
+    createMenuSchema.parse({
+      title,
+      description,
+      price,
+      sortOrder,
+    });
+
+    const menu = await createMenu(
+      title,
+      description,
+      price,
+      sortOrder,
+      categoryId,
+      req.userId as string,
+    );
+
+    return res.status(200).json({
+      message: 'Menu created successfully',
+      menu: {
+        id: menu.id,
+        title: menu.title,
+        description: menu.description,
+        price: menu.price,
+        sortOrder: menu.sortOrder,
+        createdAt: menu.createdAt,
+      },
+    });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      const errorMessages = error.errors.map(err => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }));
+      return res.status(400).json({ errors: errorMessages });
+    } else if (error instanceof Error) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+}
+
+async function handleGetMenusByCategory(req: CustomRequest, res: Response) {
+  try {
+    const { categoryId } = req.params;
+    const menus = await getMenusByCategoryId(categoryId);
+
+    const formattedMenus = menus.map(menu => ({
+      id: menu.id,
+      title: menu.title,
+      description: menu.description,
+      price: menu.price,
+      sortOrder: menu.sortOrder,
+      createdAt: menu.createdAt,
+    }));
+
+    return res.status(200).json({
+      menus: formattedMenus,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+}
+
+async function handleUpdateMenu(req: CustomRequest, res: Response) {
+  try {
+    const { menuId } = req.params;
+    const { title, description, price, sortOrder } = req.body;
+
+    updateMenuSchema.parse({
+      title,
+      description,
+      price,
+      sortOrder,
+    });
+
+    const menu = await updateMenu(
+      menuId,
+      title,
+      description,
+      price,
+      sortOrder,
+      req.userId as string,
+    );
+
+    return res.status(200).json({
+      message: 'Menu updated successfully',
+      menu: {
+        id: menu.id,
+        title: menu.title,
+        description: menu.description,
+        price: menu.price,
+        sortOrder: menu.sortOrder,
+        createdAt: menu.createdAt,
+      },
+    });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      const errorMessages = error.errors.map(err => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }));
+      return res.status(400).json({ errors: errorMessages });
+    } else if (error instanceof Error) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+}
+
+async function handleGetCategoriesByRestaurantId(
+  req: CustomRequest,
+  res: Response,
+) {
+  try {
+    const categories = await getCategoriesByRestaurantId(
+      req.params.restaurantId,
+    );
+
+    return res.status(200).json({
+      categories,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+}
+
+async function handleDeleteMenu(req: CustomRequest, res: Response) {
+  try {
+    await deleteMenu(req.params.menuId, req.userId as string);
+
+    return res.status(200).json({
+      message: `Menu deleted successfully`,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      return res.status(400).json({ message: error.message });
+    }
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+}
+
+async function handleGetAllCategoriesAndMenusByRestaurantId(
+  req: CustomRequest,
+  res: Response,
+) {
+  try {
+    const { restaurantId } = req.params;
+
+    const categories = await getCategoriesByRestaurantId(restaurantId);
+
+    return res.status(200).json({
+      categories,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+}
+
 export default {
   handleCreateCategory,
   handleGetAllCategories,
   handleUpdateCategory,
   handleDeleteCategory,
+  handleCreateMenu,
+  handleGetMenusByCategory,
+  handleUpdateMenu,
+  handleGetCategoriesByRestaurantId,
+  handleDeleteMenu,
+  handleGetAllCategoriesAndMenusByRestaurantId,
 };
