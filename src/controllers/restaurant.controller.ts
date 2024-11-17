@@ -301,6 +301,26 @@ async function handleGetAllCategoriesAndMenusByRestaurantId(
   }
 }
 
+// async function handleGetNearbyRestaurants(req: CustomRequest, res: Response) {
+//   try {
+//     const { city, zipCode } = req.query;
+
+//     if (!city || !zipCode) {
+//       return res
+//         .status(400)
+//         .json({
+//           message: 'City and zip code are required as query parameters',
+//         });
+//     }
+
+//     const restaurants = await getNearbyRestaurants(city as string, zipCode as string);
+
+//     return res.status(200).json({
+//       restaurants,
+//     });
+//   } catch (error) {}
+// }
+
 export default {
   handleCreateCategory,
   handleGetAllCategories,
@@ -312,4 +332,5 @@ export default {
   handleGetCategoriesByRestaurantId,
   handleDeleteMenu,
   handleGetAllCategoriesAndMenusByRestaurantId,
+  // handleGetNearbyRestaurants,
 };

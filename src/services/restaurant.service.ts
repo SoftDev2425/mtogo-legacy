@@ -343,6 +343,12 @@ async function deleteMenu(menuId: string, restaurantId: string) {
   });
 }
 
+// async function getNearbyRestaurants(city: string, zip: string) {
+//   // GET CITY AND ZIP X,Y
+//   // const { x, y } = await getCityAndZipCoordinates(city, zip);
+
+// }
+
 export {
   createCategory,
   getAllCategories,
