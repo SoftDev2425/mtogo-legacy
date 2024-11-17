@@ -77,7 +77,6 @@ router.delete(
   restaurantController.handleDeleteMenu,
 );
 
-
 // GET ALL CATEGORIES AND MENUS FOR RESTAURANT BY ID
 router.get(
   '/categories-menus/:restaurantId',
