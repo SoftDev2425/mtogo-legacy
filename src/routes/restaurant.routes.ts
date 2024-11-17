@@ -1,5 +1,5 @@
 import restaurantController from '../controllers/restaurant.controller';
-import { requireRestaurant } from '../middlewares/role';
+import { requireRestaurant, requireRoles } from '../middlewares/role';
 import { validateSession } from '../middlewares/sessions';
 import express from 'express';
 
@@ -14,19 +14,28 @@ router.post(
 );
 
 // Get All Categories: GET /restaurant/categories
-router.get('/categories', (_req, res) => {
-  res.send('Get All Categories');
-});
+router.get(
+  '/categories',
+  validateSession,
+  requireRoles(['restaurant', 'customer']),
+  restaurantController.handleGetAllCategories,
+);
 
 // Update Category: PUT /restaurant/categories/:categoryId
-router.put('/categories/:categoryId', (_req, res) => {
-  res.send('Update Category');
-});
+router.put(
+  '/categories/:categoryId',
+  validateSession,
+  requireRestaurant,
+  restaurantController.handleUpdateCategory,
+);
 
 // Delete Category: DELETE /restaurant/categories/:categoryId
-router.delete('/categories/:categoryId', (_req, res) => {
-  res.send('Delete Category');
-});
+router.delete(
+  '/categories/:categoryId',
+  validateSession,
+  requireRestaurant,
+  restaurantController.handleDeleteCategory,
+);
 
 // Create Menu: POST /restaurant/categories/:categoryId/menus
 router.post('/categories/:categoryId/menus', (req, res) => {

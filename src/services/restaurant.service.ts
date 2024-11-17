@@ -51,4 +51,94 @@ async function createCategory(
   }
 }
 
-export { createCategory };
+async function getAllCategories() {
+  return await prisma.categories.findMany();
+}
+
+async function updateCategory(
+  categoryId: string,
+  title: string,
+  description: string,
+  sortOrder: number,
+  restaurantId: string,
+) {
+  try {
+    // validate sortOrder
+    const category = await prisma.categories.findUnique({
+      where: {
+        id: categoryId,
+      },
+    });
+
+    if (!category) {
+      throw new Error('Category not found');
+    }
+
+    if (category.restaurantId !== restaurantId) {
+      throw new Error('Category not found');
+    }
+
+    if (sortOrder !== category.sortOrder) {
+      const categories = await prisma.categories.findMany({
+        where: {
+          restaurantId,
+        },
+        orderBy: {
+          sortOrder: 'desc',
+        },
+      });
+
+      if (sortOrder < 0 || sortOrder > categories.length - 1) {
+        throw new Error('Invalid sortOrder');
+      }
+    }
+
+    return await prisma.categories.update({
+      where: {
+        id: categoryId,
+      },
+      data: {
+        title,
+        description,
+        sortOrder,
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        sortOrder: true,
+        createdAt: true,
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (
+        error.code === 'P2002' &&
+        (error.meta?.target as string[])?.includes('title')
+      ) {
+        throw new Error('A category with this title already exists');
+      }
+    }
+    throw error;
+  }
+}
+
+async function deleteCategory(categoryId: string, restaurantId: string) {
+  const category = await prisma.categories.findUnique({
+    where: {
+      id: categoryId,
+    },
+  });
+
+  if (!category || category.restaurantId !== restaurantId) {
+    throw new Error('Category not found');
+  }
+
+  await prisma.categories.delete({
+    where: {
+      id: categoryId,
+    },
+  });
+}
+
+export { createCategory, getAllCategories, updateCategory, deleteCategory };
