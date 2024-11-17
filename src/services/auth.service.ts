@@ -105,34 +105,74 @@ async function registerRestaurant(
   }
 }
 
-async function login(email: string, password: string, rememberMe: boolean) {
-  const [customer, restaurant, admin] = await Promise.all([
-    prisma.customers.findUnique({ where: { email } }),
-    prisma.restaurants.findUnique({ where: { email } }),
-    prisma.admins.findUnique({ where: { email } }),
-  ]);
+async function customerLogin(
+  email: string,
+  password: string,
+  rememberMe: boolean,
+) {
+  const customer = await prisma.customers.findUnique({ where: { email } });
 
-  let user;
-
-  if (customer) {
-    user = customer;
-  } else if (restaurant) {
-    user = restaurant;
-  } else if (admin) {
-    user = admin;
-  } else {
+  if (!customer) {
     throw new Error('Invalid credentials');
   }
 
-  if (!(await bcrypt.compare(password, user.password))) {
+  if (!(await bcrypt.compare(password, customer.password))) {
     throw new Error('Invalid credentials');
   }
 
   const sessionTokenData = await manageUserSessions(
-    user.email,
-    user.id,
+    customer.email,
+    customer.id,
     rememberMe,
-    user.role,
+    customer.role,
+  );
+  return sessionTokenData;
+}
+
+async function restaurantLogin(
+  email: string,
+  password: string,
+  rememberMe: boolean,
+) {
+  const restaurant = await prisma.restaurants.findUnique({ where: { email } });
+
+  if (!restaurant) {
+    throw new Error('Invalid credentials');
+  }
+
+  if (!(await bcrypt.compare(password, restaurant.password))) {
+    throw new Error('Invalid credentials');
+  }
+
+  const sessionTokenData = await manageUserSessions(
+    restaurant.email,
+    restaurant.id,
+    rememberMe,
+    restaurant.role,
+  );
+  return sessionTokenData;
+}
+
+async function managementLogin(
+  email: string,
+  password: string,
+  rememberMe: boolean,
+) {
+  const management = await prisma.admins.findUnique({ where: { email } });
+
+  if (!management) {
+    throw new Error('Invalid credentials');
+  }
+
+  if (!(await bcrypt.compare(password, management.password))) {
+    throw new Error('Invalid credentials');
+  }
+
+  const sessionTokenData = await manageUserSessions(
+    management.email,
+    management.id,
+    rememberMe,
+    management.role,
   );
   return sessionTokenData;
 }
@@ -180,4 +220,11 @@ async function manageUserSessions(
   return { sessionToken, sessionTokenExpiry };
 }
 
-export { registerCustomer, registerRestaurant, login, manageUserSessions };
+export {
+  registerCustomer,
+  registerRestaurant,
+  customerLogin,
+  restaurantLogin,
+  managementLogin,
+  manageUserSessions,
+};

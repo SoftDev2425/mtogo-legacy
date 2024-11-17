@@ -3,7 +3,7 @@ import { Response, NextFunction } from 'express';
 
 export const requireRoles = (allowedRoles: string[]) => {
   return (req: CustomRequest, res: Response, next: NextFunction) => {
-    if (!req.role || !allowedRoles.includes(req.role)) {
+    if (!req.role || !allowedRoles.includes(req.role.toLowerCase())) {
       return res
         .status(403)
         .json({ message: 'Forbidden: Insufficient permissions' });

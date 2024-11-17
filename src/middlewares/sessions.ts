@@ -1,6 +1,5 @@
 import { Response, NextFunction } from 'express';
 import { parse } from 'cookie';
-import uuid from 'uuid';
 import { redisClient } from '../redis/client';
 import { CustomRequest } from '@/types/CustomRequest';
 
@@ -17,10 +16,6 @@ export const validateSession = async (
       throw new Error('Session ID is missing from cookies');
     }
 
-    if (!uuid.validate(sessionId)) {
-      throw new Error('Invalid session ID format');
-    }
-
     const sessionData = await redisClient.get(`sessionToken-${sessionId}`);
 
     // TODO: Remove this console.log
@@ -31,6 +26,10 @@ export const validateSession = async (
     }
 
     const parsedSessionData = JSON.parse(sessionData);
+
+    if (!parsedSessionData.email || !parsedSessionData.userId) {
+      throw new Error('Invalid session data');
+    }
 
     req.email = parsedSessionData.email;
     req.userId = parsedSessionData.userId;

@@ -1,5 +1,6 @@
 import { Express, Request, Response } from 'express';
 import AuthRouter from './routes/auth.routes';
+import RestaurantRouter from './routes/restaurant.routes';
 import { CustomRequest } from './types/CustomRequest';
 import { validateSession } from './middlewares/sessions';
 import {
@@ -20,6 +21,8 @@ function routes(app: Express) {
   );
 
   app.use('/api/auth', AuthRouter);
+
+  app.use('/api/restaurant', RestaurantRouter);
 
   app.get(
     '/protected',

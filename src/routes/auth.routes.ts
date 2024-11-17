@@ -1,7 +1,7 @@
 import express, { Response } from 'express';
 import authController from '../controllers/auth.controller';
 import { validateSession } from '../middlewares/sessions';
-import { CustomRequest } from '@/types/CustomRequest';
+import { CustomRequest } from '../types/CustomRequest';
 
 const router = express.Router();
 
@@ -13,7 +13,9 @@ router.get(
   },
 );
 
-router.post('/login', authController.handleLogin);
+router.post('/login/customer', authController.handleCustomerLogin);
+router.post('/login/restaurant', authController.handleRestaurantLogin);
+router.post('/login/management', authController.handleManagementLogin);
 
 router.post('/register/customer', authController.handleRegisterCustomer);
 router.post('/register/restaurant', authController.handleRegisterRestaurant);

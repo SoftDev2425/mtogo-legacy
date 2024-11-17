@@ -6,8 +6,10 @@ import { registerCustomerSchema } from '../validations/registerCustomerSchema';
 import { validateRequiredFields } from '../utils/validateRequiredFields';
 import {
   registerCustomer,
-  login,
   registerRestaurant,
+  customerLogin,
+  restaurantLogin,
+  managementLogin,
 } from '../services/auth.service';
 import { registerRestaurantSchema } from '../validations/registerRestaurantSchema';
 
@@ -125,7 +127,7 @@ async function handleRegisterRestaurant(req: CustomRequest, res: Response) {
   }
 }
 
-async function handleLogin(req: CustomRequest, res: Response) {
+async function handleCustomerLogin(req: CustomRequest, res: Response) {
   try {
     const { email, password, rememberMe } = req.body;
 
@@ -137,7 +139,93 @@ async function handleLogin(req: CustomRequest, res: Response) {
 
     loginSchema.parse({ email, password });
 
-    const { sessionToken, sessionTokenExpiry } = await login(
+    const { sessionToken, sessionTokenExpiry } = await customerLogin(
+      email,
+      password,
+      rememberMe,
+    );
+
+    // Return the token to the customer via a cookie
+    res.cookie(`session`, sessionToken, {
+      maxAge: sessionTokenExpiry * 1000,
+      httpOnly: true,
+    });
+
+    return res.status(200).json({ message: 'Login successful!' });
+  } catch (error) {
+    // type guard to narrow the type of `error`
+    if (error instanceof ZodError) {
+      const errorMessages = error.errors.map(err => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }));
+      return res.status(400).json({ errors: errorMessages });
+    } else if (error instanceof Error) {
+      // Handle general errors with a clear error message
+      return res.status(401).json({ message: error.message });
+    }
+
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+}
+
+async function handleRestaurantLogin(req: CustomRequest, res: Response) {
+  try {
+    const { email, password, rememberMe } = req.body;
+
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: 'Email and password are required' });
+    }
+
+    loginSchema.parse({ email, password });
+
+    const { sessionToken, sessionTokenExpiry } = await restaurantLogin(
+      email,
+      password,
+      rememberMe,
+    );
+
+    // Return the token to the customer via a cookie
+    res.cookie(`session`, sessionToken, {
+      maxAge: sessionTokenExpiry * 1000,
+      httpOnly: true,
+    });
+
+    return res.status(200).json({ message: 'Login successful!' });
+  } catch (error) {
+    // type guard to narrow the type of `error`
+    if (error instanceof ZodError) {
+      const errorMessages = error.errors.map(err => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }));
+      return res.status(400).json({ errors: errorMessages });
+    } else if (error instanceof Error) {
+      // Handle general errors with a clear error message
+      return res.status(401).json({ message: error.message });
+    }
+
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+}
+
+async function handleManagementLogin(req: CustomRequest, res: Response) {
+  try {
+    const { email, password, rememberMe } = req.body;
+
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: 'Email and password are required' });
+    }
+
+    loginSchema.parse({ email, password });
+
+    const { sessionToken, sessionTokenExpiry } = await managementLogin(
       email,
       password,
       rememberMe,
@@ -177,7 +265,9 @@ async function handleLogout(_req: Request, res: Response) {
 }
 
 export default {
-  handleLogin,
+  handleCustomerLogin,
+  handleRestaurantLogin,
+  handleManagementLogin,
   handleLogout,
   handleRegisterCustomer,
   handleRegisterRestaurant,
