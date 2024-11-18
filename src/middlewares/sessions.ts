@@ -13,14 +13,13 @@ export const validateSession = async (
     const sessionId = cookies.session;
 
     if (!sessionId) {
-      throw new Error('Session ID is missing from cookies');
+      throw new Error('Invalid or expired session');
     }
 
     const sessionData = await redisClient.get(`sessionToken-${sessionId}`);
 
-
     if (!sessionData) {
-      throw new Error('Session not found or expired');
+      throw new Error('Invalid or expired session');
     }
 
     const parsedSessionData = JSON.parse(sessionData);

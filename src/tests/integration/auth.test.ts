@@ -79,7 +79,6 @@ describe('customerLogin', () => {
       .post('/api/auth/login/customer')
       .send({ email: testCustomer.email, password: 'invalidPassword' });
 
-
     // Assert
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('Invalid credentials');
@@ -114,7 +113,6 @@ describe('adminLogin', () => {
     expect(response.body.message).toBe('Login successful!');
   });
 });
-
 
 describe('registerRestaurant', () => {
   const url = '/api/auth/register/restaurant';
@@ -215,17 +213,22 @@ describe('registerRestaurant', () => {
     // Assert
     expect(response.status).toBe(500);
     expect(response.body.message).toBe('Internal Server Error');
+  });
+});
 
 describe('logout', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
-  })
+    jest.clearAllMocks();
+  });
   it('should successfully logout', async () => {
     // Arrange
     const testCustomer = await createTestCustomer();
     const loginResponse = await supertest(app)
-      .post('/api/auth/login')
+      .post('/api/auth/login/customer')
       .send({ email: testCustomer.email, password: testPassword });
+
+    console.log(loginResponse.headers['set-cookie']);
+    console.log(loginResponse)
 
     // Extract session token from response cookie
     const sessionToken = loginResponse.headers['set-cookie'][0].split('=')[1];
