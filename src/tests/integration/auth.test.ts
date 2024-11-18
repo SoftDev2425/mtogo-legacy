@@ -18,7 +18,7 @@ describe('customerLogin', () => {
 
     // Act
     const response = await supertest(app)
-      .post('/api/auth/login')
+      .post('/api/auth/login/customer')
       .send({ email: testCustomer.email, password: testPassword });
 
     // Assert
@@ -36,7 +36,7 @@ describe('customerLogin', () => {
 
   it('should return 400 if email or password is missing', async () => {
     // Act
-    const response = await supertest(app).post('/api/auth/login');
+    const response = await supertest(app).post('/api/auth/login/customer');
 
     // Assert
     expect(response.status).toBe(400);
@@ -46,7 +46,7 @@ describe('customerLogin', () => {
   it('should return 401 if credentials are invalid', async () => {
     // Act
     const response = await supertest(app)
-      .post('/api/auth/login')
+      .post('/api/auth/login/customer')
       .send({ email: 'invalid@email.com', password: 'invalidPassword' });
 
     // Assert
@@ -57,7 +57,7 @@ describe('customerLogin', () => {
   it('should return 400 if email is invalid', async () => {
     // Act
     const response = await supertest(app)
-      .post('/api/auth/login')
+      .post('/api/auth/login/customer')
       .send({ email: 'invalidEmail', password: 'password' });
 
     // Assert
@@ -72,7 +72,7 @@ describe('customerLogin', () => {
     // Act
     const testCustomer = await createTestCustomer();
     const response = await supertest(app)
-      .post('/api/auth/login')
+      .post('/api/auth/login/customer')
       .send({ email: testCustomer.email, password: 'invalidPassword' });
 
     console.log(response.body);
@@ -94,7 +94,7 @@ describe('adminLogin', () => {
 
     // Act
     const response = await supertest(app)
-      .post('/api/auth/login')
+      .post('/api/auth/login/management')
       .send({ email: admin.email, password: testPassword });
 
     // Assert
