@@ -13,7 +13,8 @@
     "test:migrate": "npx dotenv -e .env.test -- npx prisma migrate reset -f",
     "test": "npm run test:migrate && jest --runInBand --verbose --coverage",
     "build-docker-image": "docker build -t testservice .",
-    "start:prod": "npx prisma db push && node src/index.js"
+    "start:prod": "npx prisma db push && node src/index.js",
+    "populate-admin": "ts-node src/utils/populateDBWithAdmin.ts"
   },
   "keywords": [],
   "author": "",
