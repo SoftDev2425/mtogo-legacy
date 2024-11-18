@@ -105,48 +105,91 @@ async function registerRestaurant(
   }
 }
 
-async function login(email: string, password: string, rememberMe: boolean) {
-  const [customer, restaurant, admin] = await Promise.all([
-    prisma.customers.findUnique({ where: { email } }),
-    prisma.restaurants.findUnique({ where: { email } }),
-    prisma.admins.findUnique({ where: { email } }),
-  ]);
-  let user;
+async function customerLogin(
+  email: string,
+  password: string,
+  rememberMe: boolean,
+) {
+  const customer = await prisma.customers.findUnique({ where: { email } });
 
-  if (customer) {
-    user = customer;
-  } else if (restaurant) {
-    user = restaurant;
-  } else if (admin) {
-    user = admin;
-  } else {
+  if (!customer) {
     throw new Error('Invalid credentials');
   }
 
-  if (!(await bcrypt.compare(password, user.password))) {
+  if (!(await bcrypt.compare(password, customer.password))) {
     throw new Error('Invalid credentials');
   }
 
   const sessionTokenData = await manageUserSessions(
-    user.id,
+    customer.email,
+    customer.id,
     rememberMe,
-    user.role,
+    customer.role,
+  );
+  return sessionTokenData;
+}
+
+async function restaurantLogin(
+  email: string,
+  password: string,
+  rememberMe: boolean,
+) {
+  const restaurant = await prisma.restaurants.findUnique({ where: { email } });
+
+  if (!restaurant) {
+    throw new Error('Invalid credentials');
+  }
+
+  if (!(await bcrypt.compare(password, restaurant.password))) {
+    throw new Error('Invalid credentials');
+  }
+
+  const sessionTokenData = await manageUserSessions(
+    restaurant.email,
+    restaurant.id,
+    rememberMe,
+    restaurant.role,
+  );
+  return sessionTokenData;
+}
+
+async function managementLogin(
+  email: string,
+  password: string,
+  rememberMe: boolean,
+) {
+  const management = await prisma.admins.findUnique({ where: { email } });
+
+  if (!management) {
+    throw new Error('Invalid credentials');
+  }
+
+  if (!(await bcrypt.compare(password, management.password))) {
+    throw new Error('Invalid credentials');
+  }
+
+  const sessionTokenData = await manageUserSessions(
+    management.email,
+    management.id,
+    rememberMe,
+    management.role,
   );
   return sessionTokenData;
 }
 
 async function manageUserSessions(
+  email: string,
   userId: string,
   rememberMe: boolean,
   userRole: string,
 ) {
-  const sessionKey = `${userRole}-${userId}`;
+  const sessionKey = userId;
   const customerSessions = await redisClient.lRange(sessionKey, 0, -1);
 
   // Remove the oldest session if the maximum number of sessions is reached
   if (customerSessions.length >= MAX_SESSIONS) {
     const oldestSessionToken = customerSessions[0];
-    await redisClient.del(`userRole-${oldestSessionToken}`);
+    await redisClient.del(oldestSessionToken);
     await redisClient.lPop(sessionKey);
   }
 
@@ -155,6 +198,7 @@ async function manageUserSessions(
   const sessionTokenExpiry = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24; // 30 days or 1 day
 
   const sessionData = {
+    email,
     userId,
     role: userRole,
     createdAt: new Date().toISOString(),
@@ -162,7 +206,7 @@ async function manageUserSessions(
 
   // Store the session token in Redis
   await redisClient.set(
-    `${userRole}-SessionToken-${sessionToken}`,
+    `sessionToken-${sessionToken}`,
     JSON.stringify(sessionData),
     {
       EX: sessionTokenExpiry,
@@ -182,37 +226,41 @@ interface SessionData {
 }
 
 // Utility function to construct session keys.
-function getSessionKey(userRole: string, sessionToken: string): string {
-  return `${userRole}-SessionToken-${sessionToken}`;
+function getSessionKey(sessionToken: string): string {
+  return `sessionToken-${sessionToken}`;
 }
 
 // Utility function to construct user session keys.
-function getUserSessionKey(userRole: string, userId: string): string {
-  return `${userRole}-${userId}`;
+function getUserSessionKey(userId: string): string {
+  return `${userId}`;
 }
 
-async function logout(
-  redis: typeof redisClient,
-  sessionToken: string,
-  userRole: string,
-) {
-  const sessionKey = getSessionKey(userRole, sessionToken);
-  const sessionData = await redis.get(sessionKey);
+async function logout(sessionToken: string) {
+  const sessionKey = getSessionKey(sessionToken);
+  const sessionData = await redisClient.get(sessionKey);
 
   if (!sessionData) {
     throw new Error('Invalid or expired session token');
   }
 
   const { userId } = JSON.parse(sessionData) as SessionData;
-  const userSessionKey = getUserSessionKey(userRole, userId);
+  const userSessionKey = getUserSessionKey(userId);
 
   console.log(`Removing session token for user: ${userId}`);
-  await redis.lRem(userSessionKey, 0, sessionToken);
+  await redisClient.lRem(userSessionKey, 0, sessionToken);
 
   console.log(`Deleting session key: ${sessionKey}`);
-  await redis.del(sessionKey);
+  await redisClient.del(sessionKey);
 
   return { message: 'Logged out successfully' };
 }
 
-export { registerCustomer, registerRestaurant, login, logout };
+export {
+  registerCustomer,
+  registerRestaurant,
+  customerLogin,
+  restaurantLogin,
+  managementLogin,
+  manageUserSessions,
+  logout,
+};

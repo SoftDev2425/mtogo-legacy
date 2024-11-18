@@ -22,7 +22,7 @@ describe('customerLogin', () => {
 
     // Act
     const response = await supertest(app)
-      .post('/api/auth/login')
+      .post('/api/auth/login/customer')
       .send({ email: testCustomer.email, password: testPassword });
 
     // Assert
@@ -40,7 +40,7 @@ describe('customerLogin', () => {
 
   it('should return 400 if email or password is missing', async () => {
     // Act
-    const response = await supertest(app).post('/api/auth/login');
+    const response = await supertest(app).post('/api/auth/login/customer');
 
     // Assert
     expect(response.status).toBe(400);
@@ -50,7 +50,7 @@ describe('customerLogin', () => {
   it('should return 401 if credentials are invalid', async () => {
     // Act
     const response = await supertest(app)
-      .post('/api/auth/login')
+      .post('/api/auth/login/customer')
       .send({ email: 'invalid@email.com', password: 'invalidPassword' });
 
     // Assert
@@ -61,7 +61,7 @@ describe('customerLogin', () => {
   it('should return 400 if email is invalid', async () => {
     // Act
     const response = await supertest(app)
-      .post('/api/auth/login')
+      .post('/api/auth/login/customer')
       .send({ email: 'invalidEmail', password: 'password' });
 
     // Assert
@@ -76,10 +76,8 @@ describe('customerLogin', () => {
     // Act
     const testCustomer = await createTestCustomer();
     const response = await supertest(app)
-      .post('/api/auth/login')
+      .post('/api/auth/login/customer')
       .send({ email: testCustomer.email, password: 'invalidPassword' });
-
-    console.log(response.body);
 
     // Assert
     expect(response.status).toBe(401);
@@ -98,7 +96,7 @@ describe('adminLogin', () => {
 
     // Act
     const response = await supertest(app)
-      .post('/api/auth/login')
+      .post('/api/auth/login/management')
       .send({ email: admin.email, password: testPassword });
 
     // Assert
@@ -115,7 +113,6 @@ describe('adminLogin', () => {
     expect(response.body.message).toBe('Login successful!');
   });
 });
-
 
 describe('registerRestaurant', () => {
   const url = '/api/auth/register/restaurant';
@@ -216,17 +213,22 @@ describe('registerRestaurant', () => {
     // Assert
     expect(response.status).toBe(500);
     expect(response.body.message).toBe('Internal Server Error');
+  });
+});
 
 describe('logout', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
-  })
+    jest.clearAllMocks();
+  });
   it('should successfully logout', async () => {
     // Arrange
     const testCustomer = await createTestCustomer();
     const loginResponse = await supertest(app)
-      .post('/api/auth/login')
+      .post('/api/auth/login/customer')
       .send({ email: testCustomer.email, password: testPassword });
+
+    console.log(loginResponse.headers['set-cookie']);
+    console.log(loginResponse);
 
     // Extract session token from response cookie
     const sessionToken = loginResponse.headers['set-cookie'][0].split('=')[1];

@@ -10,5 +10,8 @@ interface UserSession {
 }
 
 export interface CustomRequest extends Request {
+  email?: string;
+  role?: string;
+  userId?: string;
   session: Session & UserSession;
 }

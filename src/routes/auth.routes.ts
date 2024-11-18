@@ -1,9 +1,25 @@
-import express from 'express';
+import express, { Response } from 'express';
 import authController from '../controllers/auth.controller';
+import { validateSession } from '../middlewares/sessions';
+import { CustomRequest } from '../types/CustomRequest';
 
 const router = express.Router();
 
-router.post('/login', authController.handleLogin);
+router.get(
+  '/validate',
+  validateSession,
+  (req: CustomRequest, res: Response) => {
+    res.status(200).json({
+      message: 'Session is valid',
+      email: req.email,
+      validateUser: true,
+    });
+  },
+);
+
+router.post('/login/customer', authController.handleCustomerLogin);
+router.post('/login/restaurant', authController.handleRestaurantLogin);
+router.post('/login/management', authController.handleManagementLogin);
 
 router.post('/register/customer', authController.handleRegisterCustomer);
 router.post('/register/restaurant', authController.handleRegisterRestaurant);

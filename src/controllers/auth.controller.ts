@@ -6,14 +6,14 @@ import { registerCustomerSchema } from '../validations/registerCustomerSchema';
 import { validateRequiredFields } from '../utils/validateRequiredFields';
 import {
   registerCustomer,
-  login,
   registerRestaurant,
+  customerLogin,
+  restaurantLogin,
+  managementLogin,
   logout,
 } from '../services/auth.service';
 import { registerRestaurantSchema } from '../validations/registerRestaurantSchema';
 import { ValidationError } from '../errors/CustomeErrors';
-import { redisClient } from '../redis/client';
-
 
 async function handleRegisterCustomer(req: CustomRequest, res: Response) {
   try {
@@ -129,7 +129,7 @@ async function handleRegisterRestaurant(req: CustomRequest, res: Response) {
   }
 }
 
-async function handleLogin(req: CustomRequest, res: Response) {
+async function handleCustomerLogin(req: CustomRequest, res: Response) {
   try {
     const { email, password, rememberMe } = req.body;
 
@@ -141,7 +141,93 @@ async function handleLogin(req: CustomRequest, res: Response) {
 
     loginSchema.parse({ email, password });
 
-    const { sessionToken, sessionTokenExpiry } = await login(
+    const { sessionToken, sessionTokenExpiry } = await customerLogin(
+      email,
+      password,
+      rememberMe,
+    );
+
+    // Return the token to the customer via a cookie
+    res.cookie(`session`, sessionToken, {
+      maxAge: sessionTokenExpiry * 1000,
+      httpOnly: true,
+    });
+
+    return res.status(200).json({ message: 'Login successful!' });
+  } catch (error) {
+    // type guard to narrow the type of `error`
+    if (error instanceof ZodError) {
+      const errorMessages = error.errors.map(err => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }));
+      return res.status(400).json({ errors: errorMessages });
+    } else if (error instanceof Error) {
+      // Handle general errors with a clear error message
+      return res.status(401).json({ message: error.message });
+    }
+
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+}
+
+async function handleRestaurantLogin(req: CustomRequest, res: Response) {
+  try {
+    const { email, password, rememberMe } = req.body;
+
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: 'Email and password are required' });
+    }
+
+    loginSchema.parse({ email, password });
+
+    const { sessionToken, sessionTokenExpiry } = await restaurantLogin(
+      email,
+      password,
+      rememberMe,
+    );
+
+    // Return the token to the customer via a cookie
+    res.cookie(`session`, sessionToken, {
+      maxAge: sessionTokenExpiry * 1000,
+      httpOnly: true,
+    });
+
+    return res.status(200).json({ message: 'Login successful!' });
+  } catch (error) {
+    // type guard to narrow the type of `error`
+    if (error instanceof ZodError) {
+      const errorMessages = error.errors.map(err => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }));
+      return res.status(400).json({ errors: errorMessages });
+    } else if (error instanceof Error) {
+      // Handle general errors with a clear error message
+      return res.status(401).json({ message: error.message });
+    }
+
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+}
+
+async function handleManagementLogin(req: CustomRequest, res: Response) {
+  try {
+    const { email, password, rememberMe } = req.body;
+
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: 'Email and password are required' });
+    }
+
+    loginSchema.parse({ email, password });
+
+    const { sessionToken, sessionTokenExpiry } = await managementLogin(
       email,
       password,
       rememberMe,
@@ -178,17 +264,17 @@ function sendErrorResponse(res: Response, status: number, message: string) {
 }
 
 // Helper function used to validate session tokens.
-async function validateSessionToken(sessionToken: string): Promise<string> {
-  const sessionKeyPattern = `*-SessionToken-${sessionToken}`;
-  const matchingKeys = await redisClient.keys(sessionKeyPattern);
+// async function validateSessionToken(sessionToken: string): Promise<string> {
+//   const sessionKeyPattern = `*-SessionToken-${sessionToken}`;
+//   const matchingKeys = await redisClient.keys(sessionKeyPattern);
 
-  if (matchingKeys.length === 0) {
-    throw new Error('Invalid or expired session token');
-  }
+//   if (matchingKeys.length === 0) {
+//     throw new Error('Invalid or expired session token');
+//   }
 
-  const sessionKey = matchingKeys[0];
-  return sessionKey.split('-')[0]; // Extract the user role
-}
+//   const sessionKey = matchingKeys[0];
+//   return sessionKey.split('-')[0]; // Extract the user role
+// }
 
 async function handleLogout(req: CustomRequest, res: Response) {
   try {
@@ -198,8 +284,8 @@ async function handleLogout(req: CustomRequest, res: Response) {
       return sendErrorResponse(res, 400, 'Session token is missing');
     }
 
-    const userRole = await validateSessionToken(sessionToken);
-    await logout(redisClient, sessionToken, userRole);
+    // const userRole = await validateSessionToken(sessionToken);
+    await logout(sessionToken);
 
     res.clearCookie('session');
     return res.status(200).json({ message: 'Logout successful' });
@@ -212,7 +298,9 @@ async function handleLogout(req: CustomRequest, res: Response) {
 }
 
 export default {
-  handleLogin,
+  handleCustomerLogin,
+  handleRestaurantLogin,
+  handleManagementLogin,
   handleLogout,
   handleRegisterCustomer,
   handleRegisterRestaurant,
