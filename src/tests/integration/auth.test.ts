@@ -228,7 +228,7 @@ describe('logout', () => {
       .send({ email: testCustomer.email, password: testPassword });
 
     console.log(loginResponse.headers['set-cookie']);
-    console.log(loginResponse)
+    console.log(loginResponse);
 
     // Extract session token from response cookie
     const sessionToken = loginResponse.headers['set-cookie'][0].split('=')[1];
