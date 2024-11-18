@@ -90,7 +90,7 @@ model Menus {
   restaurant   Restaurants @relation(fields: [restaurantId], references: [id])
   restaurantId String // Foreign key to associate the menu with a restaurant
 
-  category   Categories @relation(fields: [categoryId], references: [id])
+  category   Categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   categoryId String // Foreign key to associate the menu with a category
 
   @@index([restaurantId], name: "restaurant_id_index_menu")

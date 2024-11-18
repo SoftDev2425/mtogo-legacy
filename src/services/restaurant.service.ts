@@ -62,22 +62,6 @@ async function createCategory(
  *
  * @returns all categories
  */
-async function getAllCategories() {
-  return await prisma.categories.findMany({
-    orderBy: {
-      sortOrder: 'asc',
-    },
-    // select everything
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      sortOrder: true,
-      createdAt: true,
-      menus: true,
-    },
-  });
-}
 
 async function updateCategory(
   categoryId: string,
@@ -306,25 +290,6 @@ async function updateMenu(
   }
 }
 
-async function getCategoriesByRestaurantId(restaurantId: string) {
-  return await prisma.categories.findMany({
-    where: {
-      restaurantId,
-    },
-    orderBy: {
-      sortOrder: 'asc',
-    },
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      sortOrder: true,
-      createdAt: true,
-      menus: true,
-    },
-  });
-}
-
 async function deleteMenu(menuId: string, restaurantId: string) {
   const menu = await prisma.menus.findUnique({
     where: {
@@ -349,14 +314,80 @@ async function deleteMenu(menuId: string, restaurantId: string) {
 
 // }
 
+async function getCategoriesByRestaurantId(restaurantId: string) {
+  return await prisma.categories.findMany({
+    where: {
+      restaurantId,
+    },
+    orderBy: {
+      sortOrder: 'asc',
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      sortOrder: true,
+      createdAt: true,
+      menus: true,
+    },
+  });
+}
+
+async function getRestaurantDetailsByRestaurantId(restaurantId: string) {
+  return await prisma.restaurants.findUnique({
+    where: {
+      id: restaurantId,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      createdAt: true,
+      address: true,
+      Categories: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          sortOrder: true,
+          createdAt: true,
+          menus: {
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              price: true,
+              sortOrder: true,
+              createdAt: true,
+            },
+            orderBy: {
+              sortOrder: 'asc',
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+async function getMenuById(menuId: string) {
+  return await prisma.menus.findUnique({
+    where: {
+      id: menuId,
+    },
+  });
+}
+
 export {
   createCategory,
-  getAllCategories,
   updateCategory,
   deleteCategory,
   createMenu,
   getMenusByCategoryId,
   updateMenu,
-  getCategoriesByRestaurantId,
   deleteMenu,
+  getRestaurantDetailsByRestaurantId,
+  getCategoriesByRestaurantId,
+  getMenuById,
 };

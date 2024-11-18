@@ -7,9 +7,10 @@ import {
   createMenu,
   deleteCategory,
   deleteMenu,
-  getAllCategories,
   getCategoriesByRestaurantId,
+  getMenuById,
   getMenusByCategoryId,
+  getRestaurantDetailsByRestaurantId,
   updateCategory,
   updateMenu,
 } from '../services/restaurant.service';
@@ -53,19 +54,6 @@ async function handleCreateCategory(req: CustomRequest, res: Response) {
       return res.status(400).json({ message: error.message });
     }
 
-    console.error(error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-}
-
-async function handleGetAllCategories(_req: CustomRequest, res: Response) {
-  try {
-    const categories = await getAllCategories();
-
-    return res.status(200).json({
-      categories,
-    });
-  } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
@@ -121,7 +109,7 @@ async function handleDeleteCategory(req: CustomRequest, res: Response) {
     await deleteCategory(req.params.categoryId, req.userId as string);
 
     return res.status(200).json({
-      message: `Category ${req.params.categoryId} deleted successfully`,
+      message: `Category deleted successfully`,
     });
   } catch (error) {
     if (error instanceof Error) {
@@ -183,6 +171,10 @@ async function handleGetMenusByCategory(req: CustomRequest, res: Response) {
   try {
     const { categoryId } = req.params;
     const menus = await getMenusByCategoryId(categoryId);
+
+    if (!menus || menus.length === 0) {
+      return res.status(404).json({ message: 'Menus not found' });
+    }
 
     const formattedMenus = menus.map(menu => ({
       id: menu.id,
@@ -283,24 +275,6 @@ async function handleDeleteMenu(req: CustomRequest, res: Response) {
   }
 }
 
-async function handleGetAllCategoriesAndMenusByRestaurantId(
-  req: CustomRequest,
-  res: Response,
-) {
-  try {
-    const { restaurantId } = req.params;
-
-    const categories = await getCategoriesByRestaurantId(restaurantId);
-
-    return res.status(200).json({
-      categories,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-}
-
 // async function handleGetNearbyRestaurants(req: CustomRequest, res: Response) {
 //   try {
 //     const { city, zipCode } = req.query;
@@ -321,9 +295,45 @@ async function handleGetAllCategoriesAndMenusByRestaurantId(
 //   } catch (error) {}
 // }
 
+async function handleGetRestaurantDetailsByRestaurantId(
+  req: CustomRequest,
+  res: Response,
+) {
+  try {
+    // Get restaurant details
+    const restaurantId = req.params.restaurantId;
+
+    // Return restaurant details
+    const restaurant = await getRestaurantDetailsByRestaurantId(restaurantId);
+
+    return res.status(200).json({
+      restaurant,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+}
+
+async function handleGetMenuById(req: CustomRequest, res: Response) {
+  try {
+    // Get menu details
+    const menuId = req.params.menuId;
+
+    // Return menu details
+    const menu = await getMenuById(menuId);
+
+    return res.status(200).json({
+      menu,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+}
+
 export default {
   handleCreateCategory,
-  handleGetAllCategories,
   handleUpdateCategory,
   handleDeleteCategory,
   handleCreateMenu,
@@ -331,6 +341,7 @@ export default {
   handleUpdateMenu,
   handleGetCategoriesByRestaurantId,
   handleDeleteMenu,
-  handleGetAllCategoriesAndMenusByRestaurantId,
   // handleGetNearbyRestaurants,
+  handleGetRestaurantDetailsByRestaurantId,
+  handleGetMenuById,
 };

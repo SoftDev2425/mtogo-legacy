@@ -9,7 +9,11 @@ router.get(
   '/validate',
   validateSession,
   (req: CustomRequest, res: Response) => {
-    res.status(200).json({ message: 'Session is valid', email: req.email });
+    res.status(200).json({
+      message: 'Session is valid',
+      email: req.email,
+      validateUser: true,
+    });
   },
 );
 
