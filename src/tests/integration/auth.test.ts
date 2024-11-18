@@ -79,7 +79,6 @@ describe('customerLogin', () => {
       .post('/api/auth/login/customer')
       .send({ email: testCustomer.email, password: 'invalidPassword' });
 
-    console.log(response.body);
 
     // Assert
     expect(response.status).toBe(401);
