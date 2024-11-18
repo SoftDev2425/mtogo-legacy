@@ -24,6 +24,6 @@ router.post('/login/management', authController.handleManagementLogin);
 router.post('/register/customer', authController.handleRegisterCustomer);
 router.post('/register/restaurant', authController.handleRegisterRestaurant);
 
-// router.post('/logout', authController.handleLogout);
+router.post('/logout', authController.handleLogout);
 
 export default router;

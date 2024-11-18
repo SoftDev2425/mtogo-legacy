@@ -220,6 +220,47 @@ async function manageUserSessions(
   return { sessionToken, sessionTokenExpiry };
 }
 
+
+
+// Used to enforce type safety for data structures.
+interface SessionData {
+  userId: string;
+}
+
+// Utility function to construct session keys.
+function getSessionKey(userRole: string, sessionToken: string): string {
+  return `${userRole}-SessionToken-${sessionToken}`;
+}
+
+// Utility function to construct user session keys.
+function getUserSessionKey(userRole: string, userId: string): string {
+  return `${userRole}-${userId}`;
+}
+
+async function logout(
+  redis: typeof redisClient,
+  sessionToken: string,
+  userRole: string,
+) {
+  const sessionKey = getSessionKey(userRole, sessionToken);
+  const sessionData = await redis.get(sessionKey);
+
+  if (!sessionData) {
+    throw new Error('Invalid or expired session token');
+  }
+
+  const { userId } = JSON.parse(sessionData) as SessionData;
+  const userSessionKey = getUserSessionKey(userRole, userId);
+
+  console.log(`Removing session token for user: ${userId}`);
+  await redis.lRem(userSessionKey, 0, sessionToken);
+
+  console.log(`Deleting session key: ${sessionKey}`);
+  await redis.del(sessionKey);
+
+  return { message: 'Logged out successfully' };
+}
+
 export {
   registerCustomer,
   registerRestaurant,
@@ -227,4 +268,5 @@ export {
   restaurantLogin,
   managementLogin,
   manageUserSessions,
+  registerCustomer, registerRestaurant, login, logout
 };

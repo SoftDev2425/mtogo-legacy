@@ -1,6 +1,7 @@
 import express from 'express';
 import routes from '../routes';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 function createServer() {
   const app = express();
@@ -12,6 +13,7 @@ function createServer() {
       origin: ['http://localhost:5173'],
     }),
   );
+  app.use(cookieParser());
 
   routes(app);
 
