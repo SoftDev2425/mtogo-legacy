@@ -18,8 +18,6 @@ export const validateSession = async (
 
     const sessionData = await redisClient.get(`sessionToken-${sessionId}`);
 
-    // TODO: Remove this console.log
-    console.log('sessionData', sessionData);
 
     if (!sessionData) {
       throw new Error('Session not found or expired');
