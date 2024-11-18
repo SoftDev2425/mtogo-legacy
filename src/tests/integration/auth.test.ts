@@ -116,6 +116,7 @@ describe('adminLogin', () => {
   });
 });
 
+
 describe('registerRestaurant', () => {
   const url = '/api/auth/register/restaurant';
   let mockRestaurant: Restaurant;
@@ -215,5 +216,54 @@ describe('registerRestaurant', () => {
     // Assert
     expect(response.status).toBe(500);
     expect(response.body.message).toBe('Internal Server Error');
+
+describe('logout', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+  it('should successfully logout', async () => {
+    // Arrange
+    const testCustomer = await createTestCustomer();
+    const loginResponse = await supertest(app)
+      .post('/api/auth/login')
+      .send({ email: testCustomer.email, password: testPassword });
+
+    // Extract session token from response cookie
+    const sessionToken = loginResponse.headers['set-cookie'][0].split('=')[1];
+
+    // Act
+    const response = await supertest(app)
+      .post('/api/auth/logout')
+      .set('Cookie', `session=${sessionToken}`);
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(response.body.message).toBe('Logout successful');
+  });
+
+  it('should return error 400 BAD REQUEST if session token missing', async () => {
+    // Arrange
+    // Act
+    const missingTokenResponse = await supertest(app).post('/api/auth/logout');
+
+    // Assert
+    expect(missingTokenResponse.status).toBe(400);
+    expect(missingTokenResponse.body.message).toBe('Session token is missing');
+  });
+
+  it('should return error 500 INTERNAL SERVER ERROR for invalid session token', async () => {
+    // Arrange
+    const invalidToken = 'invalidToken';
+
+    // Act
+    const invalidTokenResponse = await supertest(app)
+      .post('/api/auth/logout')
+      .set('Cookie', `session=${invalidToken}`);
+
+    // Assert
+    expect(invalidTokenResponse.status).toBe(500);
+    expect(invalidTokenResponse.body.message).toBe(
+      'Invalid or expired session token',
+    );
   });
 });

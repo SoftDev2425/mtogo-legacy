@@ -13,7 +13,8 @@
     "test:migrate": "npx dotenv -e .env.test -- npx prisma migrate reset -f",
     "test": "npm run test:migrate && jest --runInBand --verbose --coverage",
     "build-docker-image": "docker build -t testservice .",
-    "start:prod": "npx prisma db push && node src/index.js"
+    "start:prod": "npx prisma db push && node src/index.js",
+    "populate-admin": "ts-node src/utils/populateDBWithAdmin.ts"
   },
   "keywords": [],
   "author": "",
@@ -37,6 +38,7 @@
     "@semantic-release/github": "^11.0.0",
     "@semantic-release/release-notes-generator": "^14.0.1",
     "@types/bcrypt": "^5.0.2",
+    "@types/cookie-parser": "^1.4.7",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/express-session": "^1.18.0",
