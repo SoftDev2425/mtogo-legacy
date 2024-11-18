@@ -8,8 +8,10 @@ import {
   registerCustomer,
   login,
   registerRestaurant,
+  logout,
 } from '../services/auth.service';
 import { registerRestaurantSchema } from '../validations/registerRestaurantSchema';
+import { redisClient } from '../redis/client';
 
 async function handleRegisterCustomer(req: CustomRequest, res: Response) {
   try {
@@ -168,11 +170,42 @@ async function handleLogin(req: CustomRequest, res: Response) {
   }
 }
 
-async function handleLogout(_req: Request, res: Response) {
+// Helper function for sending error responses.
+function sendErrorResponse(res: Response, status: number, message: string) {
+  return res.status(status).json({ message });
+}
+
+// Helper function used to validate session tokens.
+async function validateSessionToken(sessionToken: string): Promise<string> {
+  const sessionKeyPattern = `*-SessionToken-${sessionToken}`;
+  const matchingKeys = await redisClient.keys(sessionKeyPattern);
+
+  if (matchingKeys.length === 0) {
+    throw new Error('Invalid or expired session token');
+  }
+
+  const sessionKey = matchingKeys[0];
+  return sessionKey.split('-')[0]; // Extract the user role
+}
+
+async function handleLogout(req: CustomRequest, res: Response) {
   try {
-    res.setHeader('set-Cookie', `session=deleted; expires=${new Date(0)}`);
+    const sessionToken = req.cookies?.session;
+
+    if (!sessionToken) {
+      return sendErrorResponse(res, 400, 'Session token is missing');
+    }
+
+    const userRole = await validateSessionToken(sessionToken);
+    await logout(redisClient, sessionToken, userRole);
+
+    res.clearCookie('session');
+    return res.status(200).json({ message: 'Logout successful' });
   } catch (error) {
-    console.error(error);
+    console.error('Error during logout:', error);
+    const message =
+      error instanceof Error ? error.message : 'Internal Server Error';
+    res.status(500).json({ message });
   }
 }
 
